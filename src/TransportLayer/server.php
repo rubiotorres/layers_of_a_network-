@@ -2,41 +2,65 @@
 <?php
 error_reporting(E_ALL);
 
-/* Allow the script to hang around waiting for connections. */
+/* Permite que o script fique por aí esperando conexões. */
 set_time_limit(0);
 
-/* Turn on implicit output flushing so we see what we're getting
- * as it comes in. */
+/* Ativa o fluxo de saída implícito para ver o que estamos recebendo à medida que ele vem. */
 ob_implicit_flush();
 
-$address = '192.168.1.53';
-$port = 10000;
+$address = '0.0.0.0';
+$port = 9000;
 
 if (($sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) === false) {
-    echo "socket_create() failed: reason: " . socket_strerror(socket_last_error()) . "\n";
+    echo "socket_create() falhou: razao: " . socket_strerror(socket_last_error()) . "\n";
 }
 
 if (socket_bind($sock, $address, $port) === false) {
-    echo "socket_bind() failed: reason: " . socket_strerror(socket_last_error($sock)) . "\n";
+    echo "socket_bind() falhou: razao: " . socket_strerror(socket_last_error($sock)) . "\n";
 }
 
 if (socket_listen($sock, 5) === false) {
-    echo "socket_listen() failed: reason: " . socket_strerror(socket_last_error($sock)) . "\n";
+    echo "socket_listen() falhou: razao: " . socket_strerror(socket_last_error($sock)) . "\n";
 }
 
 do {
     if (($msgsock = socket_accept($sock)) === false) {
-        echo "socket_accept() failed: reason: " . socket_strerror(socket_last_error($sock)) . "\n";
+        echo "socket_accept() falhou: razao: " . socket_strerror(socket_last_error($sock)) . "\n";
         break;
     }
-    /* Send instructions. */
-    $msg = "\nWelcome to the PHP Test Server. \n" .
-        "To quit, type 'quit'. To shut down the server type 'shutdown'.\n";
-    socket_write($msgsock, $msg, strlen($msg));
+    /* Envia instruções. */
+    $msg=1024*1024*1024*1024;
+    $length = strlen($msg);
+        
+    while (true) {
+        
+        $sent = socket_write($msgsock, $msg, $length);
+            
+        if ($sent === false) {
+        
+            break;
+        }
+            
+        // Check if the entire message has been sented
+        if ($sent < $length) {
+                
+            // If not sent the entire message.
+            // Get the part of the message that has not yet been sented as message
+            $msg = substr($msg, $sent);
+            print($msg);
+            // Get the length of the not sented part
+            $length -= $sent;
+
+        } else {
+            
+            break;
+        }
+            
+    }
 
     do {
         if (false === ($buf = socket_read($msgsock, 2048, PHP_NORMAL_READ))) {
-            echo "socket_read() failed: reason: " . socket_strerror(socket_last_error($msgsock)) . "\n";
+            echo "socket_read() falhou: razao: " . socket_strerror(socket_last_error($msgsock)) . "\n";
             break 2;
         }
         if (!$buf = trim($buf)) {
@@ -49,7 +73,7 @@ do {
             socket_close($msgsock);
             break 2;
         }
-        $talkback = "PHP: You said '$buf'.\n";
+        $talkback = "PHP: Você disse: '$buf'.\n";
         socket_write($msgsock, $talkback, strlen($talkback));
         echo "$buf\n";
     } while (true);
