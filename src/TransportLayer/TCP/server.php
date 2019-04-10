@@ -23,15 +23,15 @@ if (socket_listen($sock, 5) === false) {
     echo "socket_listen() falhou: razao: " . socket_strerror(socket_last_error($sock)) . "\n";
 }
 
-do {
+#do {
     if (($msgsock = socket_accept($sock)) === false) {
         echo "socket_accept() falhou: razao: " . socket_strerror(socket_last_error($sock)) . "\n";
-        break;
+        #break;
     }
     /* Envia instruções. */
-    $msg=1024*1024*1024*1024;
-    $length = strlen($msg);
-        
+    $msg="oi";
+    $length = 4;
+    $cont=1;
     while (true) {
         
         $sent = socket_write($msgsock, $msg, $length);
@@ -40,45 +40,38 @@ do {
         
             break;
         }
-            
+        elseif($cont>2){
+            echo "ou";
+            $cont=0;
+            $length=$length+1;
+        }
+        elseif($sent==$length){
+            $cont+=1;
+        }
+        
+        print($sent);
+        printf("\n");
+        print($msg);
+        printf("\n");
+        print($sent);
+
         // Check if the entire message has been sented
-        if ($sent < $length) {
+        if ($sent>0) {
                 
             // If not sent the entire message.
-            // Get the part of the message that has not yet been sented as message
-            $msg = substr($msg, $sent);
-            print($msg);
-            // Get the length of the not sented part
-            $length -= $sent;
+            // Get the part of the message that has not yet been sented as message            print($length);
+            print($length);
 
+            $msg = substr($msg, $sent);
+            // Get the length of the not sented part
+/*             $length -= $sent;
+ */
         } else {
             
             break;
         }
             
-    }
-
-    do {
-        if (false === ($buf = socket_read($msgsock, 2048, PHP_NORMAL_READ))) {
-            echo "socket_read() falhou: razao: " . socket_strerror(socket_last_error($msgsock)) . "\n";
-            break 2;
-        }
-        if (!$buf = trim($buf)) {
-            continue;
-        }
-        if ($buf == 'quit') {
-            break;
-        }
-        if ($buf == 'shutdown') {
-            socket_close($msgsock);
-            break 2;
-        }
-        $talkback = "PHP: Você disse: '$buf'.\n";
-        socket_write($msgsock, $talkback, strlen($talkback));
-        echo "$buf\n";
-    } while (true);
-    socket_close($msgsock);
-} while (true);
+    }            
 
 socket_close($sock);
 ?>

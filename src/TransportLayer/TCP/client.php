@@ -33,7 +33,6 @@ echo "Resposta de leitura:\n\n";
 while ($out = socket_read($socket, 2048)) {
     echo $out;
 }
-
 echo "Fechando socket...";
 socket_close($socket);
 echo "OK.\n\n";
