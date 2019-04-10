@@ -16,7 +16,7 @@ random.seed()
 	
 def run_server():
 	port = 8000
-	filename = "server_file.txt"
+	filename = "server_file.pdu"
 	package_size = 1024*1024
 	
 	sys.stdout.write('### Server start ###\n')
@@ -40,7 +40,7 @@ def run_server():
 				conn.send(bytes("Hi", encoding='utf-8'))
 				conn.close()
 			elif addr[0] == host:
-				
+
 				with open(filename, 'wb') as f:
 					try:
 						frame, destination_ip = mount_frame(data)
@@ -59,7 +59,7 @@ def run_server():
 					message = frame.get('payload')
 					f.write(bytes(message, encoding="utf-8"))
 					f.close()
-					sys.stdout.write(show_timestamp() + 'Successfully got the file\nSaved as file_server.txt')
+					sys.stdout.write(show_timestamp() + 'Successfully got the file\nSaved as file_server.pdu')
 				conn.close()
 				
 			sys.stdout.write('\n' + show_timestamp() + 'Server listening...\n')
@@ -83,6 +83,9 @@ def send_data(data, destination_ip):
 		sock.settimeout(None)
 	except socket.timeout:
 		sys.stdout.write(show_timestamp() + "Timeout: Destination unavailable!\n")
+		return
+	except Exception as e:
+		sys.stdout.write(show_timestamp() + "Erro: " + str(e))
 		return
 
 	sock.send(bytes(data, encoding="utf-8"))
@@ -190,11 +193,15 @@ def get_destination_mac(ip):
 def arp(ip):
 	print(show_timestamp() + "Arp: Searhing MAC for {}... ".format(ip), end='')
 	result = subprocess.run(['arp', '-a', ip], stdout=subprocess.PIPE).stdout.decode('latin')
+	print(result)
 	pattern = re.compile(r'(?:[0-9a-fA-F]-?){12}')
 	mac_list = re.findall(pattern, result)
 	if len(mac_list) < 1:
-		raise Exception('MAC not found :/')
-	mac = mac_list[0].replace('-', '')
+		pattern = re.compile(r'(?:[0-9a-fA-F]:?){12}')
+		mac_list = re.findall(pattern, result)
+		if len(mac_list) < 1:
+			raise Exception('MAC not found :/')
+	mac = mac_list[0].replace('-', '').replace(':', '')
 	return mac
 		
 def show_timestamp():
