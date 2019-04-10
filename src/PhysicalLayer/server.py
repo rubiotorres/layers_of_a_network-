@@ -118,7 +118,7 @@ def unmount_frame(data):
 		'begin': data[0:64],
 		'destination': bin2hex(data[64:112]),
 		'origin': bin2hex(data[112:160]),
-		'size': size,
+		'size': size/8,
 		'payload': bin2str(data[176:(176+size)]),
 		'crc': data[(176+size):]
 	}
