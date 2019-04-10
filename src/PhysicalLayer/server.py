@@ -193,7 +193,6 @@ def get_destination_mac(ip):
 def arp(ip):
 	print(show_timestamp() + "Arp: Searhing MAC for {}... ".format(ip), end='')
 	result = subprocess.run(['arp', '-a', ip], stdout=subprocess.PIPE).stdout.decode('latin')
-	print(result)
 	pattern = re.compile(r'(?:[0-9a-fA-F]-?){12}')
 	mac_list = re.findall(pattern, result)
 	if len(mac_list) < 1:
