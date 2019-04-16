@@ -78,10 +78,10 @@ def send_data(data, destination_ip):
 	sock = socket.socket()
 	
 	try:
-		sock.settimeout(0.1)
+		sock.settimeout(0.5)
 		sock.connect((destination_ip, port))
 		sock.settimeout(None)
-	except socket.timeout:
+	except socket.timeout as e:
 		sys.stdout.write(show_timestamp() + "Timeout: Destination unavailable!\n")
 		return
 	except Exception as e:

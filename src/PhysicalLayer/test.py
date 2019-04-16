@@ -20,7 +20,6 @@ def init():
 		
 	print (
 		'Physical Layer Test- Python\nServer running\n\nCommands:\n'+
-		'test_decode: Receive an encoded test file and decode it\n'+
 		'test_encode <IP>: Encode a test file and send it to IP\n'
 		'exit: Exit the program\n'
 	)
@@ -29,9 +28,7 @@ def init():
 		print ("Command >> ", end='')
 		command = input()
 		
-		if command == "test_send":
-			test_send_file()
-		elif command.split(' ')[0] == "test_encode":
+		if command.split(' ')[0] == "test_encode":
 			if len(command.split(' '))>1:
 				test_encode_file(command.split(' ')[1])
 			else:
@@ -87,7 +84,8 @@ def test_encode_file(ip):
 		s.settimeout(1)
 		s.connect((host, port))
 		s.settimeout(None)
-	except socket.timeout:
+	except socket.timeout as e:
+		print(e.message)
 		print ("\nTimeout: Server unavailable!\n")
 		return
 
