@@ -55,14 +55,14 @@ function draw_table()
 		love.graphics.line(220, 190+30*index, 220, 220 + 30*index)
 		
 		if curr == ip and log_timer > 0 then
-			green = 255*(1-log_timer)
-			love.graphics.setColor(green,255,green)
+			green = (1-log_timer)
+			love.graphics.setColor(green,1,green)
 		end
 		
 		love.graphics.printf(ip, 20, 200 + 30*index, 200, 'center')
 		love.graphics.printf(DNS_table[ip], 220, 200 + 30*index, 300, 'center')
 		
-		love.graphics.setColor(255,255,255)
+		love.graphics.setColor(1,1,1)
 		index = index + 1
 	end
 end
@@ -93,7 +93,7 @@ function draw_log()
 end
 
 function draw_log_row (request, y, alpha)
-	love.graphics.setColor(255,255,255, 255*alpha)
+	love.graphics.setColor(1,1,1, alpha)
 	love.graphics.printf("["..request.timestamp.."]", 540, y+10, 340, 'center')
 	
 	if request.reverse then
@@ -103,13 +103,13 @@ function draw_log_row (request, y, alpha)
 	end
 	
 	if request.response then
-		love.graphics.setColor(0,255,0, 255*alpha)
+		love.graphics.setColor(0,1,0, alpha)
 		love.graphics.printf("Returned response: "..request.response, 540, y+50, 340, 'center')
 	else
-		love.graphics.setColor(255,0,0, 255*alpha)
+		love.graphics.setColor(1,0,0, alpha)
 		love.graphics.printf("DNS lookup failed :/", 540, y+50, 340, 'center')
 	end
-	love.graphics.setColor(255,255,255,255)
+	love.graphics.setColor(1,1,1)
 end
 
 function new_log()
