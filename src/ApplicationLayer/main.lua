@@ -1,4 +1,5 @@
 require "dns"
+require "initial"
 
 DNS_table = {}
 sorted_ips = {}
@@ -6,10 +7,8 @@ DNS_log = {}
 curr = ''
 
 function love.load(arg)
-	DNS_table['192.168.10.1'] = 'pc_john'
-	DNS_table['192.168.10.2'] = 'pc_rubio'
-	DNS_table['192.168.10.3'] = 'pc_igor'
-	DNS_table['192.168.10.4'] = 'nada_aqui'
+	print(load_table)
+	DNS_table = load_table()
 
 	log_timer = 0
 	sorted_ips = sort_ips(DNS_table)
