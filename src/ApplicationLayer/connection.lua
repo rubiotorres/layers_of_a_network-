@@ -8,7 +8,7 @@ function client(msg)
 
     local s, status, partial = tcp:receive()
 	print(s or partial)
-
+    result = s or partial
     tcp:close()
 end
 
@@ -16,7 +16,7 @@ function server()
     local socket = require("socket")
     local server = assert(socket.bind("*", 1234))
     local tcp = assert(socket.tcp())
-
+ 
     print(socket._VERSION)
     print(tcp)
 

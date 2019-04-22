@@ -7,6 +7,7 @@ sorted_ips = {}
 DNS_log = {}
 curr = ''
 typing_check = ''
+result = "Press Enter for search..."
 
 function love.load(arg)
 	DNS_table = load_table()
@@ -53,9 +54,9 @@ function love.draw()
 	
 	draw_table()
 	draw_log()
-	
 	love.graphics.print("Search: " .. typing_check,20, 500)
-	love.graphics.print("Press Enter to search", 20, 540)
+	love.graphics.print(result, 20, 540)
+
 end
 
 function draw_table()
