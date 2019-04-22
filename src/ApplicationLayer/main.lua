@@ -1,5 +1,6 @@
 require "dns"
 require "initial"
+require "connection"
 
 DNS_table = {}
 sorted_ips = {}
@@ -25,6 +26,16 @@ function love.textinput(text)
 end
 
 function love.keypressed(key)
+	if key == 'p' then
+		server()
+		return
+	end
+	
+	if key == 'o' then
+		client()
+		return
+	end
+	
 	if key == 'escape' then
 		love.event.push('quit')
 	end
