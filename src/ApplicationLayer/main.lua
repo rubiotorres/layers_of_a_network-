@@ -26,15 +26,11 @@ function love.textinput(text)
 end
 
 function love.keypressed(key)
-	if key == 'p' then
+	if key == 'q' then
 		server()
 		return
 	end
 	
-	if key == 'o' then
-		client()
-		return
-	end
 	
 	if key == 'escape' then
 		love.event.push('quit')
@@ -42,6 +38,7 @@ function love.keypressed(key)
 	
 	if key == 'return' and typing_check then
 		new_request(typing_check, DNS_table, DNS_log)
+		client(typing_check)
 		typing_check = ''
 		return
 	end

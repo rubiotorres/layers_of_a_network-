@@ -1,10 +1,10 @@
-function client()
+function client(msg)
     local socket = require("socket")
     local host, port = "127.0.0.1", 1234
     local tcp = assert(socket.tcp())
 
     tcp:connect(host, port);
-    tcp:send("hello world\n");
+    tcp:send(msg.."\n");
 
     local s, status, partial = tcp:receive()
 	print(s or partial)
@@ -24,7 +24,13 @@ function server()
 
         local client = server:accept()
         line = client:receive()
-        client:send("it works\n")
+		request= new_request(line, DNS_table, DNS_log)
+        print(line)
+        if request.response then
+            client:send(request.response.."\n")
+        else
+            client:send("Not found\n")
+        end
 		client:close()
 
     end
