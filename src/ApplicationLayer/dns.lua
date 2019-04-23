@@ -33,16 +33,15 @@ function new_request(lookup, DNS_table, DNS_log)
 	
 	request.response, request.reverse = resolve_dns(lookup, DNS_table)
 	
-	add_log(request)
+	add_log(DNS_log, request)
 	return request
 end
 
-function add_log(request)
+function add_log(DNS_log, request)
 	table.insert(DNS_log, request)
 	while #DNS_log > 7 do
 		table.remove(DNS_log, 1)
 	end
-	new_log()
 end
 
 function is_ip(ip)

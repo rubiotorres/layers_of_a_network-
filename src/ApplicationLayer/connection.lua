@@ -35,3 +35,37 @@ function server()
 
     end
 end
+
+function run_server_bg(DNS_table, DNS_log, t_channel)
+	print (DNS_log)
+	local threadCode = [[
+		require("dns")
+		
+		local DNS_table, DNS_log, t_channel = ...
+		print(t_channel)
+		local socket = require("socket")
+		local server = assert(socket.bind("*", 1234))
+		local tcp = assert(socket.tcp())
+
+		print(socket._VERSION)
+		print(tcp)
+
+		while 1 do
+			local client = server:accept()
+			line = client:receive()
+			request = new_request(line, DNS_table, DNS_log)
+						
+			t_channel:push(request)
+			
+			if request.response then
+				client:send(request.response.."\n")
+			else
+				client:send("Not found\n")
+			end
+			client:close()
+
+		end
+	]]
+	thread = love.thread.newThread(threadCode)
+    thread:start(DNS_table, DNS_log, t_channel)
+end

@@ -7,18 +7,28 @@ sorted_ips = {}
 DNS_log = {}
 curr = ''
 typing_check = ''
-result = "Press Enter for search..."
+result = "Press Enter to search..."
+t_channel = love.thread.newChannel()
 
 function love.load(arg)
 	DNS_table = load_table()
 
 	log_timer = 0
 	sorted_ips = sort_ips(DNS_table)
+	
+	run_server_bg(DNS_table, DNS_log, t_channel)
 end
 
 function love.update(dt)
 	if log_timer > 0 then
 		log_timer = math.max(0, log_timer - 3*dt)
+	end
+	
+	request = t_channel:pop()
+		
+	if request then
+		add_log(DNS_log, request)
+		new_log()
 	end
 end
 
@@ -27,20 +37,14 @@ function love.textinput(text)
 end
 
 function love.keypressed(key)
-	if key == 'q' then
-		server()
-		return
-	end
-	
-	
 	if key == 'escape' then
 		love.event.push('quit')
 	end
 	
 	if key == 'return' and typing_check then
-		new_request(typing_check, DNS_table, DNS_log)
 		client(typing_check)
 		typing_check = ''
+		new_log()
 		return
 	end
 	
@@ -50,7 +54,7 @@ function love.keypressed(key)
 end
 
 function love.draw()
-	love.graphics.printf("DNS Server - running...", 0, 50, 900, 'center')
+	love.graphics.printf("DNS Server", 0, 50, 900, 'center')
 	
 	draw_table()
 	draw_log()
