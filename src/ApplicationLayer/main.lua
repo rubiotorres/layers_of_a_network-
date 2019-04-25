@@ -7,7 +7,6 @@ sorted_ips = {}
 DNS_log = {}
 curr = ''
 typing_check = ''
-result = "Press Enter to search..."
 t_channel = love.thread.newChannel()
 
 function love.load(arg)
@@ -25,7 +24,7 @@ function love.update(dt)
 	end
 	
 	request = t_channel:pop()
-		
+
 	if request then
 		add_log(DNS_log, request)
 		new_log()
@@ -42,7 +41,7 @@ function love.keypressed(key)
 	end
 	
 	if key == 'return' and typing_check then
-		client(typing_check)
+		client_test(typing_check)
 		typing_check = ''
 		new_log()
 		return
@@ -58,8 +57,27 @@ function love.draw()
 	
 	draw_table()
 	draw_log()
-	love.graphics.printf("Search: " .. typing_check,20, 500, 900, 'left')
-	love.graphics.printf(result, 20, 540, 900, 'left')
+	love.graphics.printf("Search: ",20, 500, 900, 'left')
+	love.graphics.printf(typing_check,100, 500, 900, 'left')
+	
+	if #DNS_log > 0 then
+		local request = DNS_log[#DNS_log]
+		local alpha = nil
+		if #DNS_log == 1 then alpha = 1-log_timer end
+		
+		love.graphics.setColor(1,1,1, alpha)
+		love.graphics.printf("Response:",20, 530, 900, 'left')
+		if request.response then
+			love.graphics.setColor(0,1,0, alpha)
+			love.graphics.printf(request.response, 100, 530, 340, 'left')
+		else
+			love.graphics.setColor(1,0,0, alpha)
+			love.graphics.printf("DNS lookup failed :/", 100, 530, 340, 'left')
+		end
+		love.graphics.setColor(1,1,1,1)
+	end
+	
+	love.graphics.printf("Press Enter to search...", 20, 560, 900, 'left')
 
 end
 
@@ -110,7 +128,7 @@ end
 
 function draw_log_row (request, y, alpha)
 	love.graphics.setColor(1,1,1, alpha)
-	love.graphics.printf("["..request.timestamp.."]", 540, y+10, 340, 'center')
+	love.graphics.printf("["..request.timestamp.."] - "..request.origin, 540, y+10, 340, 'center')
 	
 	if request.reverse then
 		love.graphics.printf("Request for name: "..request.lookup, 540, y+30, 340, 'center')

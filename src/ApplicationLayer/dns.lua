@@ -25,9 +25,12 @@ function resolve_dns(lookup, DNS_table)
 	end
 end
 
-function new_request(lookup, DNS_table, DNS_log)
+function new_request(lookup, DNS_table, DNS_log, origin)
+	local origin = origin or "Anon"
+	
 	request = {
 		lookup = lookup,
+		origin = origin,
 		timestamp = os.date(),	
 	}
 	
@@ -56,4 +59,9 @@ function is_ip(ip)
     else
         return false
     end
+end
+
+function out(str)
+	str = "--APL-- >> ["..os.date().."] "..str
+	print(str)
 end
