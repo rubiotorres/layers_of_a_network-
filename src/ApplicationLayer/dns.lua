@@ -62,6 +62,6 @@ function is_ip(ip)
 end
 
 function out(str)
-	str = "--APL-- >> ["..os.date().."] "..str
-	print(str)
+	str = "--APL-- >> ["..os.date().."] "..str.."\n"
+	io.stdout:write(str)
 end

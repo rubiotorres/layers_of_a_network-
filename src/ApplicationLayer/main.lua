@@ -9,6 +9,13 @@ curr = ''
 typing_check = ''
 t_channel = love.thread.newChannel()
 
+function run_phy_layer()
+	local threadCode = [[
+		os.execute("python ../../src/PhysicalLayer/server.py")
+	]]
+	love.thread.newThread(threadCode):start()
+end
+
 function love.load(arg)
 	DNS_table = load_table()
 
@@ -16,6 +23,9 @@ function love.load(arg)
 	sorted_ips = sort_ips(DNS_table)
 	
 	run_server_bg(DNS_table, DNS_log, t_channel)
+	run_phy_layer()
+	
+	
 end
 
 function love.update(dt)

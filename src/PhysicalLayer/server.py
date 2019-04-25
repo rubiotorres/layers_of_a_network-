@@ -6,6 +6,7 @@ import re
 import json
 import random
 import time
+import datetime
 
 s = socket.socket()
 mac_table = {}
@@ -18,11 +19,9 @@ random.seed()
 	
 def run_server():
 	port = DEFAULT_PORT
-	filename = "server_file.pdu"
 	package_size = 1024*1024
 	
-	sys.stdout.write('### Server start ###\n')
-	sys.stdout.write('\n' + show_timestamp() + 'Server listening...\n')
+	sys.stdout.write(show_timestamp() + 'Server listening...\n')
 	
 	destination_ip = None
 	frame = None
@@ -53,8 +52,8 @@ def run_server():
 			else:
 				frame = unmount_frame(data)
 				message = frame.get('payload')
-				sys.stdout.write(show_timestamp() + 'Successfully got the file, sending to layer above...')
-				send_data(data, host, dest_port=layer_port)
+				sys.stdout.write(show_timestamp() + 'Successfully got the file, sending to layer above...\n')
+				send_data(message, host, dest_port=layer_port)
 				conn.close()
 				
 			sys.stdout.write('\n' + show_timestamp() + 'Server listening...\n')
@@ -83,6 +82,7 @@ def send_data(data, destination_ip, dest_port=DEFAULT_PORT):
 		sys.stdout.write(show_timestamp() + "Erro: " + str(e))
 		return
 
+	print(data)
 	sock.send(bytes(data, encoding="utf-8"))
 
 	sock.close()
@@ -93,7 +93,7 @@ def mount_frame(data):
 	data = data.decode('latin')
 	begin = '1010101010101010101010101010101010101010101010101010101010101011'
 	origin = hex2bin(host_mac)
-	destination_ip = data.split('::')[0]
+	destination_ip = data.split('\n')[0]
 	payload = str2bin(data)
 	bin_size = int2bin(len(data))
 	crc = crc_remainder(payload)
@@ -103,7 +103,7 @@ def mount_frame(data):
 	
 	result = begin + destination_bin + origin + bin_size + payload + crc
 	
-	print (show_timestamp() + "\nProcessed PDU\nMessage:\n{}\n\nResult:\n{}\n".format(data,result))
+	print (show_timestamp() + "\nProcessed Frame\nMessage:\n{}\n\nResult:\n{}\n".format(data,result))
 	return result, destination_ip
 	
 def unmount_frame(data):
@@ -118,7 +118,7 @@ def unmount_frame(data):
 		'crc': data[(176+size):]
 	}
 	
-	print (show_timestamp() + "\nRead PDU\n{}\n\nResult:".format(data))
+	print (show_timestamp() + "\nRead Frame\n{}\n\nResult:".format(data))
 	print (json.dumps(frame, indent=2))
 	print ("\nCRC check: ", end='')
 	
@@ -195,10 +195,11 @@ def arp(ip):
 		mac_list = re.findall(pattern, result)
 		if len(mac_list) < 1:
 			raise Exception('MAC not found :/')
+			# mac_list = ['000000000000']
 	mac = mac_list[0].replace('-', '').replace(':', '')
 	return mac
 		
 def show_timestamp():
-	return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()) + " >> "
+	return datetime.datetime.now().strftime("--FIS-- >> [%m/%d/%y %H:%M:%S] ")
 
 run_server()

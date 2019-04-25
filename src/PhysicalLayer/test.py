@@ -6,7 +6,7 @@ import time
 import re
 
 host = '127.0.0.1'
-port = 8000
+port = 51
 package_size = 1024*1024
 
 def init():
@@ -20,7 +20,7 @@ def init():
 		
 	print (
 		'Physical Layer Test- Python\nServer running\n\nCommands:\n'+
-		'test_encode <IP>: Encode a test file and send it to IP\n'
+		'test_encode <IP> <Msg>: Encode a test file and send Msg it to IP\n'
 		'exit: Exit the program\n'
 	)
 	
@@ -29,10 +29,11 @@ def init():
 		command = input()
 		
 		if command.split(' ')[0] == "test_encode":
-			if len(command.split(' '))>1:
-				test_encode_file(command.split(' ')[1])
+			if len(command.split(' '))>2:
+				test_encode_file(command.split(' ')[1], command.split(' ')[2])
+				# test_decode_file(command.split(' ')[1], command.split(' ')[2])
 			else:
-				print("\nPlease type in an IP address!\n")
+				print("\nPlease type in an IP address and a message!\n")
 		elif command == "exit":
 			print("\nGoodbye!")
 			return
@@ -51,33 +52,13 @@ def startup_check():
 	if data.decode('utf-8') != "Hi":
 		raise socket.timeout
 	s.close()
-			
-def test_send_file():
-	s = socket.socket()
-	filename='file_bin.txt'
 	
-	try:
-		s.settimeout(1)
-		s.connect((host, port))
-		s.settimeout(None)
-	except socket.timeout:
-		print ("\nTimeout: Server unavailable!\n")
-		return
-
-	f = open(filename,'rb')
-	l = f.read(package_size)
-	s.send(l)
-
-	f.close()
-	s.close()
-	print('Sent file.txt')
-	
-def test_encode_file(ip):
+def test_encode_file(ip, msg):
 	s = socket.socket()
 	filename='file.txt'
 	
-	with open(filename, 'wb') as f:
-		f.write(bytes("{}::Arquivo enviado pela rede!".format(ip), encoding="utf-8"))
+	with open(filename, 'w') as f:
+		f.write("127.0.0.1\n{}\n{}\n".format(ip, msg))
 		f.close()
 
 	try:
@@ -89,9 +70,30 @@ def test_encode_file(ip):
 		print ("\nTimeout: Server unavailable!\n")
 		return
 
-	f = open(filename,'rb')
-	l = f.read(package_size)
-	s.send(l)
+	f = open(filename,'r')
+	l = f.read()
+	s.send(bytes(l, encoding="utf-8"))
+
+	f.close()
+	s.close()
+	print('Sent file.txt')
+	
+def test_decode_file(ip, msg):
+	s = socket.socket()
+	filename='test_file_bin.txt'
+
+	try:
+		s.settimeout(1)
+		s.connect((host, port))
+		s.settimeout(None)
+	except socket.timeout as e:
+		print(e.message)
+		print ("\nTimeout: Server unavailable!\n")
+		return
+
+	f = open(filename,'r')
+	l = f.read()
+	s.send(bytes(l, encoding="utf-8"))
 
 	f.close()
 	s.close()
