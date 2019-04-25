@@ -58,8 +58,8 @@ function love.draw()
 	
 	draw_table()
 	draw_log()
-	love.graphics.print("Search: " .. typing_check,20, 500)
-	love.graphics.print(result, 20, 540)
+	love.graphics.printf("Search: " .. typing_check,20, 500, 900, 'left')
+	love.graphics.printf(result, 20, 540, 900, 'left')
 
 end
 
