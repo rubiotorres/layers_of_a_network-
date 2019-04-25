@@ -10,12 +10,14 @@ import time
 s = socket.socket()
 mac_table = {}
 host = '127.0.0.1'
+DEFAULT_PORT = 51
 host_mac = 'F82819A1E957'
+layer_port = 54
 random.seed()
 
 	
 def run_server():
-	port = 8000
+	port = DEFAULT_PORT
 	filename = "server_file.pdu"
 	package_size = 1024*1024
 	
@@ -40,26 +42,19 @@ def run_server():
 				conn.send(bytes("Hi", encoding='utf-8'))
 				conn.close()
 			elif addr[0] == host:
-
-				with open(filename, 'wb') as f:
-					try:
-						frame, destination_ip = mount_frame(data)
-						f.write(bytes(frame, encoding="utf-8"))
-						sys.stdout.write(show_timestamp() + 'Successfully encoded the file, sending to {}...\n'.format(destination_ip))
-					except Exception as e:
-						print("Error: {}".format(e))
-					f.close()
+				try:
+					frame, destination_ip = mount_frame(data)
+					sys.stdout.write(show_timestamp() + 'Successfully encoded the file, sending to {}...\n'.format(destination_ip))
+				except Exception as e:
+					print("Error: {}".format(e))
 				conn.close()
 				if destination_ip and frame:
 					send_data(frame, destination_ip)
 			else:
-				
-				with open(filename, 'wb') as f:
-					frame = unmount_frame(data)
-					message = frame.get('payload')
-					f.write(bytes(message, encoding="utf-8"))
-					f.close()
-					sys.stdout.write(show_timestamp() + 'Successfully got the file\nSaved as file_server.pdu')
+				frame = unmount_frame(data)
+				message = frame.get('payload')
+				sys.stdout.write(show_timestamp() + 'Successfully got the file, sending to layer above...')
+				send_data(data, host, dest_port=layer_port)
 				conn.close()
 				
 			sys.stdout.write('\n' + show_timestamp() + 'Server listening...\n')
@@ -67,19 +62,19 @@ def run_server():
 			s.close()
 			raise e
 			
-def send_data(data, destination_ip):
-	collision = random.randint(1, 100) <= 5
-	while collision:
-		print(show_timestamp() + "Collision! Waiting...")
-		time.sleep(random.randint(1,100)/100)
+def send_data(data, destination_ip, dest_port=DEFAULT_PORT):
+	if dest_port == DEFAULT_PORT:
 		collision = random.randint(1, 100) <= 5
+		while collision:
+			print(show_timestamp() + "Collision! Waiting...")
+			time.sleep(random.randint(1,100)/100)
+			collision = random.randint(1, 100) <= 5
 	
-	port = 8000
 	sock = socket.socket()
 	
 	try:
-		sock.settimeout(0.5)
-		sock.connect((destination_ip, port))
+		sock.settimeout(1)
+		sock.connect((destination_ip, dest_port))
 		sock.settimeout(None)
 	except socket.timeout as e:
 		sys.stdout.write(show_timestamp() + "Timeout: Destination unavailable!\n")
@@ -91,7 +86,7 @@ def send_data(data, destination_ip):
 	sock.send(bytes(data, encoding="utf-8"))
 
 	sock.close()
-	print(show_timestamp() + 'Sent file to destination ('+ destination_ip +')')
+	print(show_timestamp() + 'Sent data to destination ('+ destination_ip +')')
 	return
 	
 def mount_frame(data):

@@ -1,6 +1,6 @@
 function client(msg)
     local socket = require("socket")
-    local host, port = "127.0.0.1", 1234
+    local host, port = "127.0.0.1", 54
     local tcp = assert(socket.tcp())
 
     tcp:connect(host, port);
@@ -14,7 +14,7 @@ end
 
 function server()
     local socket = require("socket")
-    local server = assert(socket.bind("*", 1234))
+    local server = assert(socket.bind("127.0.0.1", 54))
     local tcp = assert(socket.tcp())
  
     print(socket._VERSION)
@@ -37,18 +37,15 @@ function server()
 end
 
 function run_server_bg(DNS_table, DNS_log, t_channel)
-	print (DNS_log)
 	local threadCode = [[
 		require("dns")
 		
 		local DNS_table, DNS_log, t_channel = ...
-		print(t_channel)
 		local socket = require("socket")
 		local server = assert(socket.bind("*", 1234))
 		local tcp = assert(socket.tcp())
-
-		print(socket._VERSION)
-		print(tcp)
+		
+		print ("Server thread running, listening...")
 
 		while 1 do
 			local client = server:accept()
