@@ -11,7 +11,7 @@ t_channel = love.thread.newChannel()
 
 function run_phy_layer()
 	local threadCode = [[
-		os.execute("python ../../src/PhysicalLayer/server.py")
+		os.execute("python PhysicalLayer/server.py")
 	]]
 	love.thread.newThread(threadCode):start()
 end
