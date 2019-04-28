@@ -49,13 +49,11 @@ function love.keypressed(key)
 	if key == 'return' and typing_check then
 		client_test(typing_check)
 		typing_check = ''
-		new_log()
 		return
 	end
 	
 	if key == 'space' then
 		client_test_phy()
-		new_log()
 		return
 	end
 	
@@ -119,15 +117,15 @@ function draw_log()
 	local y, alpha
 	
 	for _, request in ipairs(DNS_log) do
-		y = 100+70*index + 70*(1-log_timer)
+		y = 100+75*index + 75*(1-log_timer)
 		alpha = 1
 		
 		if index > 0 then
-			love.graphics.line(540, y, 880, y)
+			love.graphics.line(540, y + 5, 880, y + 5)
 		end
 	
 		if index == 0 then
-			y = 170+70*index
+			y = 170+75*index
 			alpha = 1-log_timer
 		elseif index > 5 then
 			alpha = log_timer
@@ -150,7 +148,7 @@ function draw_log_row (request, y, alpha)
 	
 	if request.response then
 		love.graphics.setColor(0,1,0, alpha)
-		love.graphics.printf("Returned response: "..request.response, 540, y+50, 340, 'center')
+		love.graphics.printf("Returned response: \n"..request.response, 500, y+50, 420, 'center')
 	else
 		love.graphics.setColor(1,0,0, alpha)
 		love.graphics.printf("DNS lookup failed :/", 540, y+50, 340, 'center')

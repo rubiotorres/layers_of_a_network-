@@ -11,6 +11,9 @@ function resolve_dns(lookup, DNS_table)
 	is_reverse = not is_ip(lookup)
 	curr = ""
 	
+	local socket = require("socket")
+	local resolved = {}
+	
 	if is_reverse then
 		for ip, name in pairs(DNS_table) do
 			if name == lookup then
@@ -18,11 +21,48 @@ function resolve_dns(lookup, DNS_table)
 				return ip, true
 			end
 		end
+		out("Name not in table, searching...")
+		_, resolved = socket.dns.toip(lookup)
+		if type(resolved) == 'table' then
+			return resolved.ip[1], true
+		end
 		return nil, true
 	else
-		curr = lookup
-		return DNS_table[lookup], false
+		if DNS_table[lookup] then
+			curr = lookup
+			return DNS_table[lookup], false
+		end
+		local socket = require("socket")
+		out("IP not in table, searching...")
+		_, resolved = socket.dns.tohostname(lookup)
+		if type(resolved) == 'table' then
+			return resolved.name, false
+		end
+		return nil, false
 	end
+	
+	return result, is_reverse
+end
+
+
+function PrintTbRec(tb, depth)
+	local depth = depth or 0
+	local pref = "\t"
+	for i=1,depth do
+		pref = pref.."\t"
+	end
+	
+	if not tb then print ("nil") return end
+	print (pref:sub(1,-2).."{")
+	for key, value in pairs(tb) do	
+		if type(value) == "table" then
+			print (pref..key.." :")
+			PrintTbRec(value, depth + 1)
+		else
+			print (pref..key.." : "..tostring(value))
+		end
+	end
+	print (pref:sub(1,-2).."}")
 end
 
 function new_request(lookup, DNS_table, DNS_log, origin)
