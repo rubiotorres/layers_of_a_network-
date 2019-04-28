@@ -44,27 +44,6 @@ function resolve_dns(lookup, DNS_table)
 	return result, is_reverse
 end
 
-
-function PrintTbRec(tb, depth)
-	local depth = depth or 0
-	local pref = "\t"
-	for i=1,depth do
-		pref = pref.."\t"
-	end
-	
-	if not tb then print ("nil") return end
-	print (pref:sub(1,-2).."{")
-	for key, value in pairs(tb) do	
-		if type(value) == "table" then
-			print (pref..key.." :")
-			PrintTbRec(value, depth + 1)
-		else
-			print (pref..key.." : "..tostring(value))
-		end
-	end
-	print (pref:sub(1,-2).."}")
-end
-
 function new_request(lookup, DNS_table, DNS_log, origin)
 	local origin = origin or "Anon"
 	lookup = lookup:gsub("^%s*(.-)%s*$", "%1")
