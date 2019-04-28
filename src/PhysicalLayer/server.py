@@ -11,9 +11,9 @@ import datetime
 s = socket.socket()
 mac_table = {'127.0.0.1':'ecc22524f559'}
 host = '127.0.0.1'
-DEFAULT_PORT = 51
+DEFAULT_PORT = 1051
 host_mac = 'F82819A1E957'
-layer_port = 54
+layer_port = 1054
 random.seed()
 
 	
@@ -120,12 +120,11 @@ def unmount_frame(data):
 	
 	print (show_timestamp() + "\nRead Frame\n{}\n\nResult:".format(data))
 	print (json.dumps(frame, indent=2))
-	print ("\nCRC check: ", end='')
 	
 	if crc_check(data[176:(176+size)], frame['crc']):
-		print ('Success!\n')
+		print ('\nCRC check: Success!\n')
 	else:
-		print ('Fail :/\n')
+		print ('\nCRC check: Fail :/\n')
 		
 	return frame
 
@@ -183,13 +182,12 @@ def get_destination_mac(ip):
 		mac_destination = arp(ip)
 		mac_table[ip] = mac_destination
 	else:
-		print(show_timestamp() + "Got MAC address from table: ", end='')
-	print (mac_destination)
+		print(show_timestamp() + "Got MAC address from table: {}".format(mac_destination))
 	
 	return mac_destination
 	
 def arp(ip):
-	print(show_timestamp() + "Arp: Searhing MAC for {}... ".format(ip), end='')
+	print(show_timestamp() + "Arp: Searhing MAC for {}... ".format(ip))
 	result = subprocess.run(['arp', '-a', ip], stdout=subprocess.PIPE).stdout.decode('latin')
 	pattern = re.compile(r'(?:[0-9a-fA-F]-?){12}')
 	mac_list = re.findall(pattern, result)

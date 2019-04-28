@@ -10,9 +10,7 @@ typing_check = ''
 t_channel = love.thread.newChannel()
 
 function run_phy_layer()
-	local threadCode = [[
-		os.execute("python PhysicalLayer/server.py")
-	]]
+	local threadCode = "open_physical_layer.lua"
 	love.thread.newThread(threadCode):start()
 end
 

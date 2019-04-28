@@ -6,7 +6,7 @@ import time
 import re
 
 host = '127.0.0.1'
-port = 51
+port = 1051
 package_size = 1024*1024
 
 def init():
