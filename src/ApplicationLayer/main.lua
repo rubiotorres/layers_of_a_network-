@@ -23,9 +23,7 @@ function love.load(arg)
 	sorted_ips = sort_ips(DNS_table)
 	
 	run_server_bg(DNS_table, DNS_log, t_channel)
-	run_phy_layer()
-	
-	
+	run_phy_layer()	
 end
 
 function love.update(dt)
@@ -53,6 +51,12 @@ function love.keypressed(key)
 	if key == 'return' and typing_check then
 		client_test(typing_check)
 		typing_check = ''
+		new_log()
+		return
+	end
+	
+	if key == 'space' then
+		client_test_phy()
 		new_log()
 		return
 	end

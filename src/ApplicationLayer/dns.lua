@@ -27,6 +27,7 @@ end
 
 function new_request(lookup, DNS_table, DNS_log, origin)
 	local origin = origin or "Anon"
+	lookup = lookup:gsub("^%s*(.-)%s*$", "%1")
 	
 	request = {
 		lookup = lookup,

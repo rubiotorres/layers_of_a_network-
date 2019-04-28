@@ -9,7 +9,7 @@ import time
 import datetime
 
 s = socket.socket()
-mac_table = {}
+mac_table = {'127.0.0.1':'ecc22524f559'}
 host = '127.0.0.1'
 DEFAULT_PORT = 51
 host_mac = 'F82819A1E957'
@@ -31,6 +31,7 @@ def run_server():
 
 	while True:
 		try:
+			frame, destination_ip = None, None
 			conn, addr = s.accept()
 			sys.stdout.write (show_timestamp() + 'Got connection from ' + addr[0] + '\n')
 			
@@ -40,7 +41,7 @@ def run_server():
 				sys.stdout.write(show_timestamp() + 'Server poke\n')
 				conn.send(bytes("Hi", encoding='utf-8'))
 				conn.close()
-			elif addr[0] == host:
+			elif not is_bin(data.decode("utf-8")):
 				try:
 					frame, destination_ip = mount_frame(data)
 					sys.stdout.write(show_timestamp() + 'Successfully encoded the file, sending to {}...\n'.format(destination_ip))
@@ -82,7 +83,6 @@ def send_data(data, destination_ip, dest_port=DEFAULT_PORT):
 		sys.stdout.write(show_timestamp() + "Erro: " + str(e))
 		return
 
-	print(data)
 	sock.send(bytes(data, encoding="utf-8"))
 
 	sock.close()
@@ -93,7 +93,7 @@ def mount_frame(data):
 	data = data.decode('latin')
 	begin = '1010101010101010101010101010101010101010101010101010101010101011'
 	origin = hex2bin(host_mac)
-	destination_ip = data.split('\n')[0]
+	destination_ip = data.split('\n')[1]
 	payload = str2bin(data)
 	bin_size = int2bin(len(data))
 	crc = crc_remainder(payload)
@@ -151,6 +151,9 @@ def bin2hex(data):
 	digits = 12
 	return hex(int(data, scale))[2:].zfill(digits)
 	
+def is_bin(str):
+	return str.replace('0','').replace('1','') == ''
+	
 def crc_remainder(input_bitstring):
 	polynomial_bitstring = '101010101010101010101010101010101'
 	len_input = len(input_bitstring)
@@ -195,7 +198,6 @@ def arp(ip):
 		mac_list = re.findall(pattern, result)
 		if len(mac_list) < 1:
 			raise Exception('MAC not found :/')
-			# mac_list = ['000000000000']
 	mac = mac_list[0].replace('-', '').replace(':', '')
 	return mac
 		
