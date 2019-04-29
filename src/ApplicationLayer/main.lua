@@ -8,6 +8,13 @@ DNS_log = {}
 curr = ''
 typing_check = ''
 t_channel = love.thread.newChannel()
+scroll = {
+	active = nil,
+	scrolling = nil,
+	scroll_pos = 0,
+	scroll_size = 1,
+}
+
 
 function run_phy_layer()
 	local threadCode = "open_physical_layer.lua"
@@ -19,9 +26,14 @@ function love.load(arg)
 
 	log_timer = 0
 	sorted_ips = sort_ips(DNS_table)
-	
+		
 	run_server_bg(DNS_table, DNS_log, t_channel)
 	run_phy_layer()	
+	
+	if #sorted_ips > 10 then
+		scroll.active = true
+		scroll.scroll_size = 10/#sorted_ips
+	end
 end
 
 function love.update(dt)
@@ -29,16 +41,48 @@ function love.update(dt)
 		log_timer = math.max(0, log_timer - 3*dt)
 	end
 	
+	if not love.mouse.isDown(1) then scroll.scrolling = nil end
+	
+	if scroll.scrolling then
+		local _, y = love.mouse.getPosition()
+		local center = scroll.scroll_size/2
+		y = (y-190)/300
+		scroll.scroll_pos = y-center
+		scroll.scroll_pos = math.max(scroll.scroll_pos, 0)
+		scroll.scroll_pos = math.min(scroll.scroll_pos, 1-scroll.scroll_size)
+	end
+	
 	request = t_channel:pop()
 
 	if request then
+		if request.response then
+			local ip = request.lookup
+			local name = request.response
+			if is_ip(request.response) then 
+				ip = request.response
+				name = request.lookup
+			end
+			add_record(ip, name, DNS_table)
+		end
+		
 		add_log(DNS_log, request)
 		new_log()
+		
+		if #sorted_ips > 10 then
+			scroll.active = true
+			scroll.scroll_size = 10/#sorted_ips
+		end
 	end
 end
 
 function love.textinput(text)
 	typing_check = typing_check..text
+end
+
+function love.mousepressed(x, y, k)
+	if k == 1 and scroll.active and x > 20 and x < 540 then
+		scroll.scrolling = true
+	end
 end
 
 function love.keypressed(key)
@@ -63,8 +107,6 @@ function love.keypressed(key)
 end
 
 function love.draw()
-	love.graphics.printf("DNS Server", 0, 50, 900, 'center')
-	
 	draw_table()
 	draw_log()
 	love.graphics.printf("Search: ",20, 500, 900, 'left')
@@ -86,29 +128,57 @@ function love.draw()
 		end
 		love.graphics.setColor(1,1,1,1)
 	end
+
+	if scroll.active then
+		draw_scroll()
+	end
 	
 	love.graphics.printf("Press Enter to search...", 20, 560, 900, 'left')
+	love.graphics.printf("DNS Server", 0, 50, 900, 'center')
+end
 
+function draw_scroll()
+	love.graphics.setColor(0,0,0)
+	love.graphics.rectangle("fill", 520, 190, 15, 300)
+	love.graphics.setColor(1,1,1,1)
+	love.graphics.line(20, 190, 520, 190)
+	love.graphics.rectangle("line", 520, 190, 15, 300)
+	love.graphics.line(20, 490, 520, 490)
+	love.graphics.setColor(0.7,0.7,0.7)
+	love.graphics.rectangle("fill", 521, 190 + 300*scroll.scroll_pos, 13, 300*scroll.scroll_size)
+	love.graphics.setColor(1,1,1,1)
 end
 
 function draw_table()
-	love.graphics.printf("Names table", 20, 150, 500, 'center')
+	love.graphics.printf("Names table", 20, 130, 500, 'center')
+	
 	local index = 0
-	for _, ip in ipairs(sorted_ips) do		
-		love.graphics.rectangle("line", 20, 190 + 30*index, 500,30)
-		love.graphics.line(220, 190+30*index, 220, 220 + 30*index)
+	local y = 0
+	
+	if scroll.active then
+		local limit = 1-scroll.scroll_size
+		local percentage = scroll.scroll_pos/limit
+		y = (#sorted_ips - 10) * 30 * percentage
+	end
+	
+	local tb_canvas = love.graphics.newCanvas(500, 300)
+	love.graphics.setCanvas(tb_canvas)
+	for index, ip in ipairs(sorted_ips) do
+		love.graphics.rectangle("line", 0, 30*(index-1)-y, 500,30)
+		love.graphics.line(200, 30*(index-1)-y, 200, 30 + 30*(index-1)-y)
 		
 		if curr == ip and log_timer > 0 then
 			green = (1-log_timer)
 			love.graphics.setColor(green,1,green)
 		end
 		
-		love.graphics.printf(ip, 20, 200 + 30*index, 200, 'center')
-		love.graphics.printf(DNS_table[ip], 220, 200 + 30*index, 300, 'center')
-		
-		love.graphics.setColor(1,1,1)
-		index = index + 1
+		love.graphics.printf(ip, 0, 10 + 30*(index-1)-y, 200, 'center')
+		love.graphics.printf(DNS_table[ip], 200, 10 + 30*(index-1)-y, 300, 'center')
 	end
+	love.graphics.setCanvas()
+	love.graphics.draw(tb_canvas, 20, 190)
+	love.graphics.draw(tb_canvas, 20, 190)
+	love.graphics.setColor(1,1,1)
 end
 
 function draw_log()

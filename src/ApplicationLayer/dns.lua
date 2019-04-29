@@ -24,6 +24,7 @@ function resolve_dns(lookup, DNS_table)
 		out("Name not in table, searching...")
 		_, resolved = socket.dns.toip(lookup)
 		if type(resolved) == 'table' then
+			add_record(resolved.ip[1], lookup, DNS_table)
 			return resolved.ip[1], true
 		end
 		return nil, true
@@ -36,6 +37,7 @@ function resolve_dns(lookup, DNS_table)
 		out("IP not in table, searching...")
 		_, resolved = socket.dns.tohostname(lookup)
 		if type(resolved) == 'table' then
+			add_record(lookup, resolved.name, DNS_table)
 			return resolved.name, false
 		end
 		return nil, false
@@ -79,6 +81,11 @@ function is_ip(ip)
     else
         return false
     end
+end
+
+function add_record(ip, name, DNS_table)
+	DNS_table[ip] = name
+	sort_ips(DNS_table)
 end
 
 function out(str)
