@@ -97,7 +97,7 @@ function love.keypressed(key)
 	end
 	
 	if key == 'space' then
-		client_test_phy()
+		--client_test_phy()
 		return
 	end
 	

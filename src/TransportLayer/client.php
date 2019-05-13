@@ -4,7 +4,7 @@
 error_reporting(E_ALL);
 echo "Conexao TCP/IP em PHP\n";
 /* Defina a porta */
-$porta = 12000;
+$porta = 1053;
 /* Define o host */
 $host = '127.0.0.1'; #gethostbyname("NOMESERVIDOR");
 /* Crie um socket */

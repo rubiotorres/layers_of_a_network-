@@ -34,17 +34,21 @@ out("Server thread running, listening...")
 
 while 1 do
 	local client = server:accept()
+	
+	local is_request = client:receive() == "DNS Request"
 	local dest_ip, my_ip, lookup = client:receive(), client:receive(), client:receive()
 	client:close()
 	
-	out("Received connection from layer below.\n\nSegment: \nSource: "..dest_ip.."\nDestination: "..my_ip.."\nMessage: "..lookup.."\n")
+	if not is_request then return end
+	
+	out("Received connection from layer below.\n\nSegment: \nDNS Request\nSource: "..dest_ip.."\nDestination: "..my_ip.."\nMessage: "..lookup.."\n")
 
 	request = new_request(lookup, DNS_table, DNS_log, dest_ip)							
 	t_channel:push(request)
 	
 	out("Resolved DNS: "..lookup.." - "..(request.response or "Not found :/"))
 	
-	message = my_ip.."\n"..dest_ip.."\n"
+	message = "DNS Response\n"..my_ip.."\n"..dest_ip.."\n"
 				
 	if request.response then
 		message = message..request.response.."\n"

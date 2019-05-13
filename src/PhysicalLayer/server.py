@@ -93,7 +93,7 @@ def mount_frame(data):
 	data = data.decode('latin')
 	begin = '1010101010101010101010101010101010101010101010101010101010101011'
 	origin = hex2bin(host_mac)
-	destination_ip = data.split('\n')[1]
+	destination_ip = data.split('\n')[2].split(":")[0]
 	payload = str2bin(data)
 	bin_size = int2bin(len(data))
 	crc = crc_remainder(payload)
