@@ -6,7 +6,7 @@ include 'connection.php';
 error_reporting(E_ALL);
 
 function out($txt){
-	print $txt . "\n";
+	print "--TRA-- >> [COLOCAR DATA] " .$txt . "\n";
 }
 
 $porta = 1053;
@@ -42,36 +42,17 @@ function sendMsg($msg, $send_flags) {
 		return;
 	}
 	
-	while (true) {
-		socket_connect($socket_send, $host, 1053);
-		
-		out($socket_send);
-		
-		$pkg = new Package($msg, 1053, $send_flags);
-		$sent = socket_write($socket_send, json_encode($pkg));
-		//verifica término do envio
-		if ($sent === false) {
-			break;
-		} elseif ($cont > 1) { //Verifica quantidade de acertos 
-			$cont = 0;
-			$length = $length + 1; // Caso tenha +2 acertos manda mais 1 
-		} elseif ($sent == $length) { //Vrifica tamanho da mssg
-			$cont += 1;
-		}
+	socket_connect($socket_send, $host, 1051);
+	
+	out($socket_send);
+	
+	$pkg = new Package($msg, 1051, $send_flags);
+	$sent = socket_write($socket_send, json_encode($pkg));
 
-		out("Quantidade de dados enviados: " . $sent);
-		out("Menssagem enviada: " . $msg);
-		out("Acertos: " . $cont);
-		
-		socket_close($socket_send);
-
-		if ($sent > 0) {
-			out("Quantidade de msg à ser eviada: ".$length);
-			$msg = substr($msg, $sent);
-		} else {
-			break;
-		}
-	}
+	out("Quantidade de dados enviados: " . $sent);
+	out("Menssagem enviada:\n" . json_encode($pkg));
+	
+	socket_close($socket_send);
 }
 
 function send_apl($msg){
@@ -98,7 +79,7 @@ function remove_connection($ip, $connections){
 }
 
 while (true) {
-	print "Server listening...";
+	out("Server listening...");
     $client = socket_accept($socket_servidor);
     if ($client < 0) {
         out("Error accepting connection");

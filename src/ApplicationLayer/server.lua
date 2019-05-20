@@ -14,7 +14,7 @@ end
 
 function send_response(response)
 	local socket = require("socket")
-	local host, port = "127.0.0.1", 1051
+	local host, port = "127.0.0.1", 1053
 	local tcp = assert(socket.tcp())
 	tcp:connect(host, port)
 	tcp:settimeout(1)

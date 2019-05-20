@@ -16,8 +16,11 @@ scroll = {
 }
 
 
-function run_phy_layer()
+function run_layers()
 	local threadCode = "open_physical_layer.lua"
+	love.thread.newThread(threadCode):start()
+	
+	threadCode = "open_transport_layer.lua"
 	love.thread.newThread(threadCode):start()
 end
 
@@ -28,7 +31,7 @@ function love.load(arg)
 	sorted_ips = sort_ips(DNS_table)
 		
 	run_server_bg(DNS_table, DNS_log, t_channel)
-	run_phy_layer()	
+	run_layers()	
 	
 	if #sorted_ips > 10 then
 		scroll.active = true
