@@ -7,7 +7,7 @@ error_reporting(E_ALL);
 date_default_timezone_set('America/Sao_Paulo'); 
 
 function out($txt){
-	print "--TRA-- >> [" . date("m/d/y H:i:s") . "] " .$txt . "\n";
+	print "\033[32m--TRA-- >> [" . date("m/d/y H:i:s") . "] " .$txt . "\n\033[0m";
 }
 
 $porta = 1053;
