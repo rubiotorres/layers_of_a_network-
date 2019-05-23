@@ -8,11 +8,12 @@ class Connection {
 		$this->status = "CLOSED";
 		$this->seq = 0;
         $this->ack = 0;
-		$this->msg = "";
+		$this->received = "";
+		$this->sending = "";
     }
 	
 	public function append_msg($mgs){
-		$this->msg = ($this->msg).$msg;
+		$this->received = ($this->received).$msg;
 	}
 }
 

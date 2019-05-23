@@ -29,7 +29,6 @@ if ($listen < 0) {
 }
 
 $connections = array();
-$waiting = array();
 
 $flags = array("URG"=>0,"ACK"=>0,"PSH"=>0,"RST"=>0,"SYN"=>0,"FIN"=>0);
 
@@ -99,7 +98,7 @@ while (true) {
 			$send_flags = $flags;
 			$send_flags["SYN"] = 1;
 			sendMsg("", $send_flags, $ip);
-			$waiting[$ip] = $pkg;
+			$connection->sending = $pkg;
 			$connection->status = "SYN_SENT";
 			array_push ($connections, $connection);
 		}
@@ -109,7 +108,7 @@ while (true) {
 		}
 	}
 	else{
-		out("Received message from layer below:\n $pkg");
+		out("Received message from layer below:\n $pkg \n");
 		$pkg = Package::mount($pkg);
 		$ip = $pkg->dst_ip;
 		$connection = get_connection($ip, $connections);
@@ -133,23 +132,24 @@ while (true) {
 			switch ($connection->status){
 				case "SYN_SENT":
 					if ($pkg->flags["SYN"] == 1 and $pkg->flags["ACK"] == 1){
+						out("Received SYN/ACK, connection stablished, sending ACK...");
 						$send_flags = $flags;
 						$send_flags["ACK"] = 1;
 						sendMsg("", $send_flags, $ip);
 						$connection->status = "ESTABLISHED";
-						if (waiting[$ip]){
-							sendMsg(waiting[$ip], $flags, $ip);
+						if ($connection->sending){
+							sendMsg($connection->sending, $flags, $ip);
 							$connection->status = "FIN_WAIT_1";
-							unset($waiting[$ip]);
 						}
 					}
 					break;
 				case "SYN_RCVD":
 					if ($pkg->flags["SYN"] == 0 and $pkg->flags["ACK"] == 1){
+						out("Received ACK, connection stablished...");
 						$connection->status = "ESTABLISHED";
-						if (waiting[$ip]){
-							sendMsg(waiting[$ip], $flags, $ip);
-							unset($waiting[$ip]);
+						$connection->append_msg($pkg->data);
+						if ($connection->sending){
+							sendMsg($connection->sending, $flags, $ip);
 						}
 					}
 					break;
@@ -163,6 +163,7 @@ while (true) {
 						$send_flags["FIN"] = 1;
 						sendMsg("", $send_flags, $ip);
 						$connection->status = "CLOSE_WAIT";
+						send_apl($connection->received);
 					}
 					break;
 				case "FIN_WAIT_1":

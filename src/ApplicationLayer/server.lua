@@ -30,9 +30,8 @@ function send_response(response)
 	tcp:close()
 end
 
-out("Server thread running, listening...")
-
 while 1 do
+	out("Server listening...")
 	local client = server:accept()
 	
 	local is_request = client:receive() == "DNS Request"
@@ -41,7 +40,7 @@ while 1 do
 	
 	if not is_request then return end
 	
-	out("Received connection from layer below.\n\nSegment: \nDNS Request\nSource: "..dest_ip.."\nDestination: "..my_ip.."\nMessage: "..lookup.."\n")
+	out("Received connection.\n\nSegment: \nDNS Request\nSource: "..dest_ip.."\nDestination: "..my_ip.."\nMessage: "..lookup.."\n")
 
 	request = new_request(lookup, DNS_table, DNS_log, dest_ip)							
 	t_channel:push(request)
