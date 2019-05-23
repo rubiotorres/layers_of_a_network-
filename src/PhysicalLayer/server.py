@@ -9,11 +9,11 @@ import time
 import datetime
 
 s = socket.socket()
-mac_table = {'127.0.0.1':'ecc22524f559'}
+mac_table = {'127.0.0.1':'babacadabada'}
 host = '127.0.0.1'
 DEFAULT_PORT = 1051
 host_mac = 'F82819A1E957'
-layer_port = 1054
+layer_port = 1053
 random.seed()
 
 	
@@ -86,15 +86,16 @@ def send_data(data, destination_ip, dest_port=DEFAULT_PORT):
 	sock.send(bytes(data, encoding="utf-8"))
 
 	sock.close()
-	print(show_timestamp() + 'Sent data to destination ('+ destination_ip +')')
+	print(show_timestamp() + 'Sent data to destination ('+ destination_ip + ':' + str(dest_port) + ')')
 	return
 	
 def mount_frame(data):
 	data = data.decode('latin')
+	obj = json.loads(data)
 	begin = '1010101010101010101010101010101010101010101010101010101010101011'
 	origin = hex2bin(host_mac)
-	destination_ip = data.split('\n')[2].split(":")[0]
-	payload = str2bin(data)
+	destination_ip = obj.get('dst_ip')
+	payload = mount_transp(data)
 	bin_size = int2bin(len(data))
 	crc = crc_remainder(payload)
 	
@@ -105,6 +106,9 @@ def mount_frame(data):
 	
 	print (show_timestamp() + "\nProcessed Frame\nMessage:\n{}\n\nResult:\n{}\n".format(data,result))
 	return result, destination_ip
+	
+def mount_transp(data):
+	return str2bin(data)
 	
 def unmount_frame(data):
 	data = data.decode('latin')

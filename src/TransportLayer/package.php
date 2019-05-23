@@ -1,19 +1,35 @@
 <?php
-class Package {
-    // constructor
-    public function __construct($data, $dst_port, $flags) {
-        $this->src_port = 1051;
-        $this->dst_port = $dst_port;
-        $this->seq = 0;
-        $this->ack = 0;
-		$this->flags = $flags;
-		$this->wdn_sz = 10;
-		$this->checksum = 0;
-		$this->data = $data;
+class Package {	
+	public function __construct($pkg_json) {
+        $this->src_port = $pkg_json->src_port;
+        $this->dst_port = $pkg_json->dst_port;
+        $this->seq = $pkg_json->seq;
+        $this->ack = $pkg_json->ack;
+		$this->flags = $pkg_json->flags;
+		$this->wdn_sz = $pkg_json->wdn_sz;
+		$this->checksum = $pkg_json->checksum;
+		$this->data = $pkg_json->data;
+		$this->dst_ip = $pkg_json->dst_ip;
     }
 
 	public static function mount($pkg_json){
-		return new Package("data", 1051, array("SYN"=>1,"ACK"=>0,"URG"=>0,"FIN"=>0,"RST"=>0,"PSH"=>0));
+		$obj = new Package(json_decode($pkg_json));
+		$obj->flags = (array) $obj->flags;
+		return $obj;
+	}
+	
+	public static function create($data, $dst_port, $flags, $dst_ip) {
+		$obj = new stdClass();
+        $obj->src_port = 1051;
+        $obj->dst_port = $dst_port;
+        $obj->seq = 0;
+        $obj->ack = 0;
+		$obj->flags = $flags;
+		$obj->wdn_sz = 10;
+		$obj->checksum = 0;
+		$obj->data = $data;
+		$obj->dst_ip = $dst_ip;
+		return new Package($obj);
 	}
 }
 ?>

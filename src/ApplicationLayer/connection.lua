@@ -7,7 +7,7 @@ end
 
 function client_test(msg)
 	local my_ip = '127.0.0.1'
-	local destination = '192.168.10.0'
+	local destination = '127.0.0.1'
     local socket = require("socket")
     local host, port = "127.0.0.1", 1054
     local tcp = assert(socket.tcp())
