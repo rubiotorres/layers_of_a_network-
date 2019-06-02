@@ -56,7 +56,7 @@ for ($n = 0; $n < 3; $n++) {
                 break;
             }
         case 3:
-            $msg = "";
+            $msg;
             do {
                 $test = socket_read($socket_cliente, 8);
                 echo "Recebida agora: " . $test . "\n";
