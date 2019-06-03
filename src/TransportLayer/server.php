@@ -13,20 +13,20 @@ function out($txt)
 }
 
 $porta = 1053;
-$host = '127.0.0.1';
+$host = '169.254.123.98';
 $socket_servidor = socket_create(AF_INET, SOCK_STREAM, 0);
 if ($socket_servidor < 0) {
-	out("Couldn't create socket on $host");
+	out("Couldn't create socket on 127.0.0.1");
 	exit;
 }
-$bind = socket_bind($socket_servidor, $host, $porta);
+$bind = socket_bind($socket_servidor, "127.0.0.1", $porta);
 if ($bind < 0) {
-	out("Bind error on $host:$porta");
+	out("Bind error on 127.0.0.1:$porta");
 	exit;
 }
 $listen = socket_listen($socket_servidor, 5);
 if ($listen < 0) {
-	out("Error listening on $host:$porta");
+	out("Error listening on 127.0.0.1:$porta");
 	exit;
 }
 
@@ -36,7 +36,6 @@ $flags = array("URG" => 0, "ACK" => 0, "PSH" => 0, "RST" => 0, "SYN" => 0, "FIN"
 
 function udpSendMsg($msg, $ip)
 {
-	$host = '127.0.0.1';
 	$length = 4;
 	$cont = 1;
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
@@ -57,7 +56,6 @@ function udpSendMsg($msg, $ip)
 
 function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 {
-	$host = '127.0.0.1';
 	$length = 4;
 	$cont = 1;
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
@@ -79,6 +77,7 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 		$sentTotal = $seq;
 		$size = 10;
 		while($sentTotal < strlen($msg)){
+			$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 			socket_connect($socket_send, $host, 1051);
 
 			$pkg = Package::create(substr($msg, $sentTotal, $size), 1051, $send_flags, $ip, $sentTotal, $ack);
@@ -94,9 +93,9 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 
 function send_apl($msg)
 {
-	$host = '127.0.0.1';
+	$AplHost = '127.0.0.1';
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-	$socket = socket_connect($socket_send, $host, 1054);
+	$socket = socket_connect($socket_send, $AplHost, 1054);
 	$sent = socket_write($socket_send, $msg);
 	socket_close($socket_send);
 
@@ -133,14 +132,14 @@ while (true) {
 
 	if (substr($pkg, 0, 3) == "UDP") {
 		out("Received message from Application Layer:\n" . $pkg . "\n");
-		$ip = explode(":", explode("\n", $pkg)[2])[0];
-		$port = explode(":", explode("\n", $pkg)[2])[1];
+		$ip = explode(":", explode("\n", $pkg)[3])[0];
+		$port = explode(":", explode("\n", $pkg)[3])[1];
 		out("Sending message via UDP...");
 		udpSendMsg($pkg, $ip);
 	} else if (substr($pkg, 0, 3) == "TCP") {
 		out("Received message from Application Layer:\n" . $pkg . "\n");
-		$ip = explode(":", explode("\n", $pkg)[2])[0];
-		$port = explode(":", explode("\n", $pkg)[2])[1];
+		$ip = explode(":", explode("\n", $pkg)[3])[0];
+		$port = explode(":", explode("\n", $pkg)[3])[1];
 		$connection = get_connection($ip, $connections);
 		if ($connection == NULL) {
 			out("Creating new connection with $ip, sending SYN...");

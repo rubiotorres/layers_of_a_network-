@@ -10,7 +10,7 @@ import datetime
 
 s = socket.socket()
 mac_table = {'127.0.0.1':'babacadabada'}
-host = '127.0.0.1'
+host = '169.254.123.98'
 DEFAULT_PORT = 1051
 host_mac = 'F82819A1E957'
 layer_port = 1053
