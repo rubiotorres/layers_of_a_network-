@@ -8,6 +8,7 @@ DNS_log = {}
 curr = ''
 typing_check = ''
 t_channel = love.thread.newChannel()
+is_tcp = true
 scroll = {
 	active = nil,
 	scrolling = nil,
@@ -83,6 +84,11 @@ function love.textinput(text)
 end
 
 function love.mousepressed(x, y, k)
+	if k == 1 and x > 20 and x < 170 and y > 45 and y < 75 then
+		is_tcp = not is_tcp
+		return
+	end
+	
 	if k == 1 and scroll.active and x > 20 and x < 540 then
 		scroll.scrolling = true
 	end
@@ -94,7 +100,7 @@ function love.keypressed(key)
 	end
 	
 	if key == 'return' and typing_check then
-		client_test(typing_check)
+		client_test(typing_check, is_tcp)
 		typing_check = ''
 		return
 	end
@@ -135,6 +141,15 @@ function love.draw()
 	if scroll.active then
 		draw_scroll()
 	end
+	
+	local protocol = 'UDP'
+	if is_tcp then protocol = 'TCP' end
+	
+	love.graphics.printf("Using", 20, 20, 150, 'center')
+	love.graphics.setColor(0,0,1,1)
+	love.graphics.rectangle("line", 20, 45, 150, 30)
+	love.graphics.printf(protocol, 20, 50, 150, 'center')
+	love.graphics.setColor(1,1,1,1)
 	
 	love.graphics.printf("Press Enter to search...", 20, 560, 900, 'left')
 	love.graphics.printf("DNS Server", 0, 50, 900, 'center')

@@ -126,9 +126,9 @@ def unmount_frame(data):
 	print (json.dumps(frame, indent=2) + '\033[0m')
 	
 	if crc_check(data[176:(176+size)], frame['crc']):
-		print ('\033[31m\nCRC check: Success!\n\033[0m')
+		print ('\033[35m\nCRC check: Success!\n\033[0m')
 	else:
-		print ('\033[31m\nCRC check: Fail :/\n\033[0m')
+		print ('\033[35m\nCRC check: Fail :/\n\033[0m')
 		
 	return frame
 

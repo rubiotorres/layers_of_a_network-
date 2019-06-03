@@ -5,7 +5,10 @@ function run_server_bg(DNS_table, DNS_log, t_channel)
     thread:start(DNS_table, DNS_log, t_channel)
 end
 
-function client_test(msg)
+function client_test(msg, is_tcp)
+	local protocol = "UDP"
+	if is_tcp then protocol = 'TCP' end
+	
 	local my_ip = '127.0.0.1'
 	local destination = '127.0.0.1'
     local socket = require("socket")
@@ -15,7 +18,7 @@ function client_test(msg)
     tcp:connect(host, port)
 	tcp:settimeout(1)
 	
-	msg = "DNS Request\n"..destination..":1051\n"..my_ip..":1051\n"..msg
+	msg = protocol.."\nDNS Request\n"..destination..":1051\n"..my_ip..":1051\n"..msg
 		
     tcp:send(msg.."\n")
 	
@@ -23,16 +26,5 @@ function client_test(msg)
 end
 
 function client_test_phy()
-	local msg = ''
-	
-	local socket = require("socket")
-    local host, port = "127.0.0.1", 1051
-    local tcp = assert(socket.tcp())
 
-    tcp:connect(host, port)
-	tcp:settimeout(1)
-			
-    tcp:send(msg)
-	
-    tcp:close()
 end
