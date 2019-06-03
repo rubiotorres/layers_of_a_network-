@@ -161,7 +161,7 @@ while (true) {
 			send_apl($pkg->data);
 		} else {
 			$pkg = Package::mount($pkg);
-			$ip = $pkg->dst_ip;
+			$ip = $pkg->orig_ip;
 			$connection = get_connection($ip, $connections);
 			if ($connection == NULL) {
 				if ($pkg->flags["SYN"] == 1 and $pkg->flags["ACK"] == 0) {

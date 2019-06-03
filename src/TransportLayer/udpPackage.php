@@ -6,6 +6,7 @@ class UDPPackage {
 		$this->checksum = $pkg_json->checksum;
 		$this->size = strlen($pkg_json->data);
 		$this->dst_ip = $pkg_json->dst_ip;
+		$this->orig_ip = $pkg_json->orig_ip;
 		$this->data = $pkg_json->data;
     }
 
@@ -21,6 +22,7 @@ class UDPPackage {
    		$obj->checksum = 0;
 		$obj->data = $data;
 		$obj->dst_ip = $dst_ip;
+		$obj->orig_ip = $orig_ip;
 		return new UDPPackage($obj);
 	}
 }

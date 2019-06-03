@@ -54,7 +54,7 @@ def run_server():
 				frame = unmount_frame(data)
 				message = frame.get('payload')
 				sys.stdout.write(show_timestamp() + 'Successfully got the file, sending to layer above...\n\033[0m')
-				send_data(message, host, dest_port=layer_port)
+				send_data(message, "127.0.0.1", dest_port=layer_port)
 				conn.close()
 				
 			sys.stdout.write('\n' + show_timestamp() + 'Server listening...\n\033[0m')

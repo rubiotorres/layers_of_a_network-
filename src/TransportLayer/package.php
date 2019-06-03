@@ -10,6 +10,7 @@ class Package {
 		$this->checksum = $pkg_json->checksum;
 		$this->data = $pkg_json->data;
 		$this->dst_ip = $pkg_json->dst_ip;
+		$this->orig_ip = $pkg_json->orig_ip;
     }
 
 	public static function mount($pkg_json){
@@ -28,6 +29,7 @@ class Package {
 		$obj->wdn_sz = 10;
 		$obj->checksum = 0;
 		$obj->data = $data;
+		$obj->orig_ip = "169.254.123.98";
 		$obj->dst_ip = $dst_ip;
 		return new Package($obj);
 	}
