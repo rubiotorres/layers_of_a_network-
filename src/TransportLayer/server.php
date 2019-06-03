@@ -149,13 +149,94 @@ while (true) {
 			$ip = $pkg->dst_ip;
 			$connection = get_connection($ip, $connections);
 			if ($connection == NULL) {
-				out("Refused Connection: non-SYN without connection");
+				if ($pkg->flags["SYN"] == 1 and $pkg->flags["ACK"] == 0) {
+					out("Creating new connection with $ip, sending SYN/ACK...");
+					$connection = new Connection($pkg->src_port, $ip);
+					$send_flags = $flags;
+					$send_flags["SYN"] = 1;
+					$send_flags["ACK"] = 1;
+					sendMsg("", $send_flags, $ip);
+					$connection->status = "SYN_RCVD";
+					array_push($connections, $connection);
+				} else {
+					out("Refused Connection: non-SYN without connection");
+				}
 			} else {
 				$ip = $connection->dst_ip;
-				$connection->append_msg($pkg->data);
-				$num_send = 2;
-				$mss_send = chunk_split_unicode($mssg, $num_send);
-				sendMsg($mssg, $send_flags, $ip);
+				switch ($connection->status) {
+					case "SYN_SENT":
+						if ($pkg->flags["SYN"] == 1 and $pkg->flags["ACK"] == 1) {
+							out("Received SYN/ACK, connection stablished, sending ACK...");
+							$send_flags = $flags;
+							$send_flags["ACK"] = 1;
+							sendMsg("", $send_flags, $ip);
+							$connection->status = "ESTABLISHED";
+							if ($connection->sending) {
+								sendMsg($connection->sending, $flags, $ip);
+								$connection->status = "FIN_WAIT_1";
+							}
+						}
+						break;
+					case "SYN_RCVD":
+						if ($pkg->flags["SYN"] == 0 and $pkg->flags["ACK"] == 1) {
+							out("Received ACK, connection stablished...");
+							$connection->status = "ESTABLISHED";
+							$connection->append_msg($pkg->data);
+							if ($connection->sending) {
+								sendMsg($connection->sending, $flags, $ip);
+							}
+						}
+						break;
+					case "ESTABLISHED":
+						$connection->append_msg($pkg->data);
+						$num_send = 2;
+						$mss_send = chunk_split_unicode($mssg, $num_send);
+						for ($i = 0; i < strlen($mss_send); $i += $num_send) {
+							$send_flags = $flags;
+							$send_flags["ACK"] = 1;
+							$connection->seq = $i;
+							$connection->checksum = crc32($mss_send[$i]);
+
+							sendMsg($mss_send[$i], $send_flags, $ip);
+						}
+						if ($pkg->flags["FIN"] == 1) {
+							$send_flags["ACK"] = 0;
+							$send_flags["FIN"] = 1;
+							sendMsg("", $send_flags, $ip);
+							$connection->status = "CLOSE_WAIT";
+							send_apl($connection->received);
+						}
+						break;
+					case "FIN_WAIT_1":
+						if ($pkg->flags["FIN"] == 1) {
+							$send_flags = $flags;
+							$send_flags["ACK"] = 1;
+							sendMsg("", $send_flags, $ip);
+							$connection->status = "CLOSING";
+						}
+						if ($pkg->flags["ACK"] == 1) {
+							$connection->status = "FIN_WAIT_2";
+						}
+						break;
+					case "FIN_WAIT_2":
+						if ($pkg->flags["FIN"] == 1) {
+							$send_flags = $flags;
+							$send_flags["ACK"] = 1;
+							sendMsg("", $send_flags, $ip);
+							$connections = remove_connection($ip, $connections);
+						}
+						break;
+					case "CLOSING":
+						if ($pkg->flags["ACK"] == 1) {
+							$connections = remove_connection($ip, $connections);
+						}
+						break;
+					case "CLOSE_WAIT":
+						if ($pkg->flags["ACK"] == 1) {
+							$connections = remove_connection($ip, $connections);
+						}
+						break;
+				}
 			}
 		}
 		
