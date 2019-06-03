@@ -204,6 +204,6 @@ def arp(ip):
 	return mac
 		
 def show_timestamp():
-	return datetime.datetime.now().strftime("\033[31m--FIS-- >> [%m/%d/%y %H:%M:%S] ")
+	return datetime.datetime.now().strftime("\033[35m--FIS-- >> [%m/%d/%y %H:%M:%S] ")
 
 run_server()

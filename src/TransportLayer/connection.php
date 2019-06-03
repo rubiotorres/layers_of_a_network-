@@ -15,7 +15,7 @@ class Connection
 		$this->checksum = "";
 	}
 
-	public function append_msg($mgs)
+	public function append_msg($msg)
 	{
 		$this->received = ($this->received) . $msg;
 	}
