@@ -18,12 +18,12 @@ class Package {
 		return $obj;
 	}
 	
-	public static function create($data, $dst_port, $flags, $dst_ip) {
+	public static function create($data, $dst_port, $flags, $dst_ip, $seq, $ack) {
 		$obj = new stdClass();
         $obj->src_port = 1051;
         $obj->dst_port = $dst_port;
-        $obj->seq = 0;
-        $obj->ack = 0;
+        $obj->seq = $seq;
+        $obj->ack = $ack;
 		$obj->flags = $flags;
 		$obj->wdn_sz = 10;
 		$obj->checksum = 0;

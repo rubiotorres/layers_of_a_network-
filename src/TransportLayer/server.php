@@ -55,7 +55,7 @@ function udpSendMsg($msg, $ip)
 	socket_close($socket_send);
 }
 
-function sendMsg($msg, $send_flags, $ip)
+function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 {
 	$host = '127.0.0.1';
 	$length = 4;
@@ -65,15 +65,31 @@ function sendMsg($msg, $send_flags, $ip)
 		out("Couldn't create socket on $host");
 		return;
 	}
+	
+	if ($msg == ""){
+		socket_connect($socket_send, $host, 1051);
 
-	socket_connect($socket_send, $host, 1051);
+		$pkg = Package::create($msg, 1051, $send_flags, $ip, $seq, $ack);
+		socket_write($socket_send, json_encode($pkg));
 
-	$pkg = Package::create($msg, 1051, $send_flags, $ip);
-	$sent = socket_write($socket_send, json_encode($pkg));
+		out("Sent message:\n" . json_encode($pkg) . "\n");
 
-	out("Sent message:\n" . json_encode($pkg) . "\n");
+		socket_close($socket_send);
+	} else {
+		$sentTotal = $seq;
+		$size = 10;
+		while($sentTotal < strlen($msg)){
+			socket_connect($socket_send, $host, 1051);
 
-	socket_close($socket_send);
+			$pkg = Package::create(substr($msg, $sentTotal, $size), 1051, $send_flags, $ip, $sentTotal, $ack);
+			$sent = socket_write($socket_send, json_encode($pkg));
+			$sentTotal = $sentTotal + $size;
+
+			out("Sent message:\n" . json_encode($pkg) . "\n");
+
+			socket_close($socket_send);
+		}
+	}
 }
 
 function send_apl($msg)
@@ -188,21 +204,37 @@ while (true) {
 						}
 						break;
 					case "ESTABLISHED":
-						$connection->append_msg($pkg->data);
-						$num_send = 2;
-						$mss_send = chunk_split_unicode($mssg, $num_send);
-						for ($i = 0; i < strlen($mss_send); $i += $num_send) {
+						if ($pkg->flags["ACK"] == 1) {
+							if ($pkg->ack == $connection->last_ack){
+								$this->dup_acks = $this->dup_acks + 1;
+								if ($this->dup_acks == 3) {
+									sendMsg($connection->sending, $flags, $ip, $connection->last_ack, $connection->ack);
+								}
+							} else {
+								$this->dup_acks = 0;
+							}
+							$connection->last_ack = $pkg->ack;
+							break;
+						}
+						
+						if ($connection->seq != strlen($pkg->data) + $pkg->seq){
 							$send_flags = $flags;
 							$send_flags["ACK"] = 1;
-							$connection->seq = $i;
-							$connection->checksum = crc32($mss_send[$i]);
-
-							sendMsg($mss_send[$i], $send_flags, $ip);
+							sendMsg("", $send_flags, $ip, 0, $connection->seq);
+							break;
 						}
+						
+						$connection->append_msg($pkg->data);
+						$connection->seq = $connection->seq + strlen($pkg->data);
+						$send_flags = $flags;
+						$send_flags["ACK"] = 1;
+						sendMsg("", $send_flags, $ip, $connection->ack, $connection->seq);
+						
 						if ($pkg->flags["FIN"] == 1) {
+							$send_flags = $flags;
 							$send_flags["ACK"] = 0;
 							$send_flags["FIN"] = 1;
-							sendMsg("", $send_flags, $ip);
+							sendMsg("", $send_flags, $ip, $connection->ack, $connection->seq);
 							$connection->status = "CLOSE_WAIT";
 							send_apl($connection->received);
 						}

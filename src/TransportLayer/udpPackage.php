@@ -4,6 +4,7 @@ class UDPPackage {
         $this->src_port = $pkg_json->src_port;
         $this->dst_port = $pkg_json->dst_port;
 		$this->checksum = $pkg_json->checksum;
+		$this->size = strlen($pkg_json->data);
 		$this->dst_ip = $pkg_json->dst_ip;
 		$this->data = $pkg_json->data;
     }

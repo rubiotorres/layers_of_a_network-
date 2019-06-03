@@ -12,7 +12,8 @@ class Connection
 		$this->ack = 0;
 		$this->received = "";
 		$this->sending = "";
-		$this->checksum = "";
+		$this->last_ack = 0;
+		$this->dup_acks = 0;
 	}
 
 	public function append_msg($msg)
