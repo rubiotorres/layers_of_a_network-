@@ -12,21 +12,25 @@ function out($txt)
 	print "\033[32m--TRA-- >> [" . date("m/d/y H:i:s") . "] " . $txt . "\n\033[0m";
 }
 
-$porta = 1053;
-$host = '169.254.123.98';
+$myfile = fopen("./config.txt", "r");
+$contents = fread($myfile,filesize("./config.txt"));
+$host_ip = explode(":", $contents)[0];
+$host_port = (int)explode(":", $contents)[1] + 1;
+fclose($myfile);
+
 $socket_servidor = socket_create(AF_INET, SOCK_STREAM, 0);
 if ($socket_servidor < 0) {
-	out("Couldn't create socket on 127.0.0.1");
+	out("Couldn't create socket on $host_ip");
 	exit;
 }
-$bind = socket_bind($socket_servidor, "127.0.0.1", $porta);
+$bind = socket_bind($socket_servidor, $host_ip, $host_port + 2);
 if ($bind < 0) {
-	out("Bind error on 127.0.0.1:$porta");
+	out("Bind error on $host_ip:$host_port");
 	exit;
 }
 $listen = socket_listen($socket_servidor, 5);
 if ($listen < 0) {
-	out("Error listening on 127.0.0.1:$porta");
+	out("Error listening on $host_ip:$host_port");
 	exit;
 }
 
@@ -36,17 +40,18 @@ $flags = array("URG" => 0, "ACK" => 0, "PSH" => 0, "RST" => 0, "SYN" => 0, "FIN"
 
 function udpSendMsg($msg, $ip)
 {
+	global $host_ip, $host_port;
 	$length = 4;
 	$cont = 1;
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 	if ($socket_send < 0) {
-		out("Couldn't create socket on '169.254.123.98'");
+		out("Couldn't create socket on $host_ip");
 		return;
 	}
 
-	socket_connect($socket_send, '169.254.123.98', 1051);
+	socket_connect($socket_send, $host_ip, $host_port);
 
-	$pkg = UDPPackage::create($msg, 1051, $ip);
+	$pkg = UDPPackage::create($msg, $host_port, $ip);
 	$sent = socket_write($socket_send, json_encode($pkg));
 
 	out("Sent message:\n" . json_encode($pkg) . "\n");
@@ -56,18 +61,19 @@ function udpSendMsg($msg, $ip)
 
 function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 {
+	global $host_ip, $host_port;
 	$length = 4;
 	$cont = 1;
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 	if ($socket_send < 0) {
-		out("Couldn't create socket on '169.254.123.98'");
+		out("Couldn't create socket on $host_ip");
 		return;
 	}
 	
 	if ($msg == ""){
-		socket_connect($socket_send, "169.254.123.98", 1051);
+		socket_connect($socket_send, $host_ip, $host_port);
 
-		$pkg = Package::create($msg, 1051, $send_flags, $ip, $seq, $ack);
+		$pkg = Package::create($msg, $host_port, $send_flags, $ip, $seq, $ack);
 		socket_write($socket_send, json_encode($pkg));
 
 		out("Sent message:\n" . json_encode($pkg) . "\n");
@@ -85,9 +91,9 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 			} else {
 				$size = 10;
 			}
-			socket_connect($socket_send, '169.254.123.98', 1051);
+			socket_connect($socket_send, $host_ip, $host_port);
 
-			$pkg = Package::create(substr($msg, $sentTotal, $size), 1051, $send_flags, $ip, $sentTotal, $ack);
+			$pkg = Package::create(substr($msg, $sentTotal, $size), $host_port, $send_flags, $ip, $sentTotal, $ack);
 			$sent = socket_write($socket_send, json_encode($pkg));
 			$sentTotal = $sentTotal + $size;
 
@@ -100,9 +106,9 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 
 function send_apl($msg)
 {
-	$AplHost = '127.0.0.1';
+	$AplHost = $host_ip;
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-	$socket = socket_connect($socket_send, $AplHost, 1054);
+	$socket = socket_connect($socket_send, $AplHost, $host_port + 3);
 	$sent = socket_write($socket_send, $msg);
 	socket_close($socket_send);
 

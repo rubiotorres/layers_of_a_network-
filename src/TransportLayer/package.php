@@ -1,5 +1,13 @@
 <?php
+
+$myfile = fopen("./config.txt", "r");
+$contents = fread($myfile,filesize("./config.txt"));
+$src_ip = explode(":", $contents)[0];
+$src_port = (int)explode(":", $contents)[1] + 1;
+fclose($myfile);
+
 class Package {	
+
 	public function __construct($pkg_json) {
         $this->src_port = $pkg_json->src_port;
         $this->dst_port = $pkg_json->dst_port;
@@ -21,7 +29,8 @@ class Package {
 	
 	public static function create($data, $dst_port, $flags, $dst_ip, $seq, $ack) {
 		$obj = new stdClass();
-        $obj->src_port = 1051;
+		global $src_port, $src_ip;
+        $obj->src_port = $src_port;
         $obj->dst_port = $dst_port;
         $obj->seq = $seq;
         $obj->ack = $ack;
@@ -29,7 +38,7 @@ class Package {
 		$obj->wdn_sz = 10;
 		$obj->checksum = 0;
 		$obj->data = $data;
-		$obj->orig_ip = "169.254.123.98";
+		$obj->orig_ip = $src_ip;
 		$obj->dst_ip = $dst_ip;
 		return new Package($obj);
 	}

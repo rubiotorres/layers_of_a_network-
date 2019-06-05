@@ -8,12 +8,18 @@ import random
 import time
 import datetime
 
+f = open("./config.txt","r")
+contents = f.read()
+HOST = contents.split(":")[0]
+DEFAULT_PORT = int(contents.split(":")[1]) + 1
+contents = None
+f.close()
+
 s = socket.socket()
-mac_table = {'127.0.0.1':'babacadabada'}
-host = '169.254.123.98'
-DEFAULT_PORT = 1051
-host_mac = 'F82819A1E957'
-layer_port = 1053
+mac_table = {'127.0.0.1':'000000000000'}
+
+HOST_mac = 'F82819A1E957'
+layer_port = DEFAULT_PORT + 2
 random.seed()
 
 	
@@ -26,7 +32,7 @@ def run_server():
 	destination_ip = None
 	frame = None
 	
-	s.bind((host, port))
+	s.bind((HOST, port))
 	s.listen(5)
 
 	while True:
@@ -54,7 +60,7 @@ def run_server():
 				frame = unmount_frame(data)
 				message = frame.get('payload')
 				sys.stdout.write(show_timestamp() + 'Successfully got the file, sending to layer above...\n\033[0m')
-				send_data(message, "127.0.0.1", dest_port=layer_port)
+				send_data(message, HOST, dest_port=layer_port)
 				conn.close()
 				
 			sys.stdout.write('\n' + show_timestamp() + 'Server listening...\n\033[0m')
@@ -93,7 +99,7 @@ def mount_frame(data):
 	data = data.decode('latin')
 	obj = json.loads(data)
 	begin = '1010101010101010101010101010101010101010101010101010101010101011'
-	origin = hex2bin(host_mac)
+	origin = hex2bin(HOST_mac)
 	destination_ip = obj.get('dst_ip')
 	payload = mount_transp(data)
 	bin_size = int2bin(len(data))

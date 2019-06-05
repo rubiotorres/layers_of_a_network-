@@ -1,3 +1,18 @@
+function split(inputstr)
+        local t={}
+        for str in string.gmatch(inputstr, "([^:]+)") do
+                table.insert(t, str)
+        end
+        return t
+end
+
+local file = io.open("./config.txt", "rb")
+local contents = split(file:read "*a")
+file:close()
+
+HOST = contents[1]
+PORT = contents[2] + 1
+
 require "dns"
 require "initial"
 require "connection"
@@ -15,7 +30,6 @@ scroll = {
 	scroll_pos = 0,
 	scroll_size = 1,
 }
-
 
 function run_layers()
 	local threadCode = "open_physical_layer.lua"

@@ -1,8 +1,23 @@
+function split(inputstr)
+        local t={}
+        for str in string.gmatch(inputstr, "([^:]+)") do
+                table.insert(t, str)
+        end
+        return t
+end
+
+local file = io.open("./config.txt", "rb")
+local contents = split(file:read "*a")
+file:close()
+
+HOST = contents[1]
+PORT = contents[2] + 1
+
 require("dns")
 
 local DNS_table, DNS_log, t_channel = ...
 local socket = require("socket")
-local server = assert(socket.bind("127.0.0.1", 1054))
+local server = assert(socket.bind(HOST, PORT + 3))
 
 function split(inputstr)
 	local t={}
@@ -14,7 +29,7 @@ end
 
 function send_response(response)
 	local socket = require("socket")
-	local host, port = "127.0.0.1", 1053
+	local host, port = HOST, PORT + 2
 	local tcp = assert(socket.tcp())
 	tcp:connect(host, port)
 	tcp:settimeout(1)
