@@ -40,11 +40,11 @@ function udpSendMsg($msg, $ip)
 	$cont = 1;
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 	if ($socket_send < 0) {
-		out("Couldn't create socket on $host");
+		out("Couldn't create socket on '169.254.123.98'");
 		return;
 	}
 
-	socket_connect($socket_send, $host, 1051);
+	socket_connect($socket_send, '169.254.123.98', 1051);
 
 	$pkg = UDPPackage::create($msg, 1051, $ip);
 	$sent = socket_write($socket_send, json_encode($pkg));
@@ -60,12 +60,12 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 	$cont = 1;
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 	if ($socket_send < 0) {
-		out("Couldn't create socket on $host");
+		out("Couldn't create socket on '169.254.123.98'");
 		return;
 	}
 	
 	if ($msg == ""){
-		socket_connect($socket_send, $host, 1051);
+		socket_connect($socket_send, "169.254.123.98", 1051);
 
 		$pkg = Package::create($msg, 1051, $send_flags, $ip, $seq, $ack);
 		socket_write($socket_send, json_encode($pkg));
@@ -77,8 +77,15 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 		$sentTotal = $seq;
 		$size = 10;
 		while($sentTotal < strlen($msg)){
-			$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-			socket_connect($socket_send, $host, 1051);
+			if ($sentTotal + $size >= strlen($msg)){
+				$send_flags["FIN"] = 1;
+			}
+			if($socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP)){
+					$size+=1;
+			} else {
+				$size = 10;
+			}
+			socket_connect($socket_send, '169.254.123.98', 1051);
 
 			$pkg = Package::create(substr($msg, $sentTotal, $size), 1051, $send_flags, $ip, $sentTotal, $ack);
 			$sent = socket_write($socket_send, json_encode($pkg));
@@ -115,7 +122,7 @@ function remove_connection($ip, $connections)
 {
 	for ($i = 0; $i < count($connections); $i++) {
 		if ($connections[$i]->dst_ip == $ip)
-			array_splice($connections, i, i);
+			array_splice($connections, $i, $i);
 	}
 	return $connections;
 }
@@ -216,7 +223,7 @@ while (true) {
 							break;
 						}
 						
-						if ($connection->seq != strlen($pkg->data) + $pkg->seq){
+						if ($connection->seq != $pkg->seq){
 							$send_flags = $flags;
 							$send_flags["ACK"] = 1;
 							sendMsg("", $send_flags, $ip, 0, $connection->seq);

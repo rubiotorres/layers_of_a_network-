@@ -22,7 +22,7 @@ class UDPPackage {
    		$obj->checksum = 0;
 		$obj->data = $data;
 		$obj->dst_ip = $dst_ip;
-		$obj->orig_ip = $orig_ip;
+		$obj->orig_ip = "169.254.123.98";
 		return new UDPPackage($obj);
 	}
 }

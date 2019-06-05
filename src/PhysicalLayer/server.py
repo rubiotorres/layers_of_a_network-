@@ -199,7 +199,8 @@ def arp(ip):
 		pattern = re.compile(r'(?:[0-9a-fA-F]:?){12}')
 		mac_list = re.findall(pattern, result)
 		if len(mac_list) < 1:
-			raise Exception('MAC not found :/')
+			batata = None
+			# raise Exception('MAC not found :/')
 	mac = mac_list[0].replace('-', '').replace(':', '')
 	return mac
 		
