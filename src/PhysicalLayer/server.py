@@ -49,13 +49,13 @@ def run_server():
 				conn.close()
 			elif not is_bin(data.decode("utf-8")):
 				try:
-					frame, destination_ip = mount_frame(data)
-					sys.stdout.write(show_timestamp() + 'Successfully encoded the file, sending to {}...\n\033[0m'.format(destination_ip))
+					frame, destination_ip, dest_port = mount_frame(data)
+					sys.stdout.write(show_timestamp() + 'Successfully encoded the file, sending to {}:{}...\n\033[0m'.format(destination_ip, dest_port))
 				except Exception as e:
 					print("\033[31mError: {}\033[0m".format(e))
 				conn.close()
 				if destination_ip and frame:
-					send_data(frame, destination_ip)
+					send_data(frame, destination_ip, dest_port=dest_port)
 			else:
 				frame = unmount_frame(data)
 				message = frame.get('payload')
@@ -101,6 +101,7 @@ def mount_frame(data):
 	begin = '1010101010101010101010101010101010101010101010101010101010101011'
 	origin = hex2bin(HOST_mac)
 	destination_ip = obj.get('dst_ip')
+	destination_port = int(obj.get('dst_port'))
 	payload = mount_transp(data)
 	bin_size = int2bin(len(data))
 	crc = crc_remainder(payload)
@@ -111,7 +112,7 @@ def mount_frame(data):
 	result = begin + destination_bin + origin + bin_size + payload + crc
 	
 	print (show_timestamp() + "\nProcessed Frame\nMessage:\n{}\n\nResult:\n{}\n\033[0m".format(data,result))
-	return result, destination_ip
+	return result, destination_ip, destination_port
 	
 def mount_transp(data):
 	return str2bin(data)

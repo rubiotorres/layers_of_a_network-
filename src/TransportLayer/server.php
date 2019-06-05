@@ -38,7 +38,7 @@ $connections = array();
 
 $flags = array("URG" => 0, "ACK" => 0, "PSH" => 0, "RST" => 0, "SYN" => 0, "FIN" => 0);
 
-function udpSendMsg($msg, $ip)
+function udpSendMsg($msg, $ip, $dst_port)
 {
 	global $host_ip, $host_port;
 	$length = 4;
@@ -51,7 +51,7 @@ function udpSendMsg($msg, $ip)
 
 	socket_connect($socket_send, $host_ip, $host_port);
 
-	$pkg = UDPPackage::create($msg, $host_port, $ip);
+	$pkg = UDPPackage::create($msg, $dst_port, $ip);
 	$sent = socket_write($socket_send, json_encode($pkg));
 
 	out("Sent message:\n" . json_encode($pkg) . "\n");
@@ -59,7 +59,7 @@ function udpSendMsg($msg, $ip)
 	socket_close($socket_send);
 }
 
-function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
+function sendMsg($msg, $send_flags, $ip, $dst_port, $seq = 0, $ack = 0)
 {
 	global $host_ip, $host_port;
 	$length = 4;
@@ -73,7 +73,7 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 	if ($msg == ""){
 		socket_connect($socket_send, $host_ip, $host_port);
 
-		$pkg = Package::create($msg, $host_port, $send_flags, $ip, $seq, $ack);
+		$pkg = Package::create($msg, $dst_port, $send_flags, $ip, $seq, $ack);
 		socket_write($socket_send, json_encode($pkg));
 
 		out("Sent message:\n" . json_encode($pkg) . "\n");
@@ -93,7 +93,7 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 			}
 			socket_connect($socket_send, $host_ip, $host_port);
 
-			$pkg = Package::create(substr($msg, $sentTotal, $size), $host_port, $send_flags, $ip, $sentTotal, $ack);
+			$pkg = Package::create(substr($msg, $sentTotal, $size), $dst_port, $send_flags, $ip, $sentTotal, $ack);
 			$sent = socket_write($socket_send, json_encode($pkg));
 			$sentTotal = $sentTotal + $size;
 
@@ -106,6 +106,7 @@ function sendMsg($msg, $send_flags, $ip, $seq = 0, $ack = 0)
 
 function send_apl($msg)
 {
+	global $host_ip;
 	$AplHost = $host_ip;
 	$socket_send = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 	$socket = socket_connect($socket_send, $AplHost, $host_port + 3);
@@ -148,7 +149,7 @@ while (true) {
 		$ip = explode(":", explode("\n", $pkg)[3])[0];
 		$port = explode(":", explode("\n", $pkg)[3])[1];
 		out("Sending message via UDP...");
-		udpSendMsg($pkg, $ip);
+		udpSendMsg($pkg, $ip, $port);
 	} else if (substr($pkg, 0, 3) == "TCP") {
 		out("Received message from Application Layer:\n" . $pkg . "\n");
 		$ip = explode(":", explode("\n", $pkg)[3])[0];
@@ -159,13 +160,13 @@ while (true) {
 			$connection = new Connection($port, $ip);
 			$send_flags = $flags;
 			$send_flags["SYN"] = 1;
-			sendMsg("", $send_flags, $ip);
+			sendMsg("", $send_flags, $ip, $port);
 			$connection->sending = $pkg;
 			$connection->status = "SYN_SENT";
 			array_push($connections, $connection);
 		} else {
 			out("Connection found with $ip, sending message...");
-			sendMsg($pkg, $flags, $ip);
+			sendMsg($pkg, $flags, $ip, $port);
 		}
 	} else {
 		out("Received message from layer below:\n $pkg \n");
@@ -175,6 +176,7 @@ while (true) {
 		} else {
 			$pkg = Package::mount($pkg);
 			$ip = $pkg->orig_ip;
+			$port = $pkg->src_port;
 			$connection = get_connection($ip, $connections);
 			if ($connection == NULL) {
 				if ($pkg->flags["SYN"] == 1 and $pkg->flags["ACK"] == 0) {
@@ -183,7 +185,7 @@ while (true) {
 					$send_flags = $flags;
 					$send_flags["SYN"] = 1;
 					$send_flags["ACK"] = 1;
-					sendMsg("", $send_flags, $ip);
+					sendMsg("", $send_flags, $ip, $port);
 					$connection->status = "SYN_RCVD";
 					array_push($connections, $connection);
 				} else {
@@ -197,10 +199,10 @@ while (true) {
 							out("Received SYN/ACK, connection stablished, sending ACK...");
 							$send_flags = $flags;
 							$send_flags["ACK"] = 1;
-							sendMsg("", $send_flags, $ip);
+							sendMsg("", $send_flags, $ip, $port);
 							$connection->status = "ESTABLISHED";
 							if ($connection->sending) {
-								sendMsg($connection->sending, $flags, $ip);
+								sendMsg($connection->sending, $flags, $ip, $port);
 								$connection->status = "FIN_WAIT_1";
 							}
 						}
@@ -211,7 +213,7 @@ while (true) {
 							$connection->status = "ESTABLISHED";
 							$connection->append_msg($pkg->data);
 							if ($connection->sending) {
-								sendMsg($connection->sending, $flags, $ip);
+								sendMsg($connection->sending, $flags, $ip, $port);
 							}
 						}
 						break;
@@ -220,7 +222,7 @@ while (true) {
 							if ($pkg->ack == $connection->last_ack){
 								$this->dup_acks = $this->dup_acks + 1;
 								if ($this->dup_acks == 3) {
-									sendMsg($connection->sending, $flags, $ip, $connection->last_ack, $connection->ack);
+									sendMsg($connection->sending, $flags, $ip, $port, $connection->last_ack, $connection->ack);
 								}
 							} else {
 								$this->dup_acks = 0;
@@ -232,7 +234,7 @@ while (true) {
 						if ($connection->seq != $pkg->seq){
 							$send_flags = $flags;
 							$send_flags["ACK"] = 1;
-							sendMsg("", $send_flags, $ip, 0, $connection->seq);
+							sendMsg("", $send_flags, $ip, $port, 0, $connection->seq);
 							break;
 						}
 						
@@ -240,13 +242,13 @@ while (true) {
 						$connection->seq = $connection->seq + strlen($pkg->data);
 						$send_flags = $flags;
 						$send_flags["ACK"] = 1;
-						sendMsg("", $send_flags, $ip, $connection->ack, $connection->seq);
+						sendMsg("", $send_flags, $ip, $port, $connection->ack, $connection->seq);
 						
 						if ($pkg->flags["FIN"] == 1) {
 							$send_flags = $flags;
 							$send_flags["ACK"] = 0;
 							$send_flags["FIN"] = 1;
-							sendMsg("", $send_flags, $ip, $connection->ack, $connection->seq);
+							sendMsg("", $send_flags, $ip, $port, $connection->ack, $connection->seq);
 							$connection->status = "CLOSE_WAIT";
 							send_apl($connection->received);
 						}
@@ -255,7 +257,7 @@ while (true) {
 						if ($pkg->flags["FIN"] == 1) {
 							$send_flags = $flags;
 							$send_flags["ACK"] = 1;
-							sendMsg("", $send_flags, $ip);
+							sendMsg("", $send_flags, $ip, $port);
 							$connection->status = "CLOSING";
 						}
 						if ($pkg->flags["ACK"] == 1) {
@@ -266,7 +268,7 @@ while (true) {
 						if ($pkg->flags["FIN"] == 1) {
 							$send_flags = $flags;
 							$send_flags["ACK"] = 1;
-							sendMsg("", $send_flags, $ip);
+							sendMsg("", $send_flags, $ip, $port);
 							$connections = remove_connection($ip, $connections);
 						}
 						break;
