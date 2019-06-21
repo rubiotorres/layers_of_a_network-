@@ -1,13 +1,27 @@
 <html>
 <head>
-  <title>Network Layer</title>
+  <title>Multiplication Table</title>
   <script type="text/javascript">
-    var origem = prompt("Origem:");
-    var dest = prompt("Destino:");
-    
-    document.write(origem);
-	    document.write(dest);
-    
+    var redes = prompt("Número de redes");
+	var routing = [[],[]];
+	var i;
+	for (i = 0; i < redes; i++){
+		var destino = prompt("IP destino");
+		var mask = prompt("Máscara");
+		var gateway = prompt("Gateway");
+		var interf = prompt("Interface");
+		routing[i][0] = destino;
+		routing[i][1] = mask;
+		routing[i][2] = gateway;
+		routing[i][3] = interf;
+	}
+	for (i = 0; i < routing.length; i++){
+		document.write(" " + routing[i][0]);
+		document.write(" " + routing[i][1]);
+		document.write(" " + routing[i][2]);
+		document.write(" " + routing[i][3]);
+		document.write("\n");
+	}
   </script>
 </head>
 <body>
