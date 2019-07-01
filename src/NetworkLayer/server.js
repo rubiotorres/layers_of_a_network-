@@ -50,11 +50,11 @@ function createRouteTb(){
 	}
 }	
 function showRoutes(){	
-	out("IP Rede \t Mascara \t Gateway \n");
+	out("IP Rede \t Mascara \t Gateway");
 	for (i = 0; i < routing.length; i++){
 		out(routing[i][0] +
 		" \t " + routing[i][1] +
-		" \t " + routing[i][2] + "\n");
+		" \t " + routing[i][2]);
 	}
 }
 

@@ -16,6 +16,7 @@ PORT = contents[2] + 1
 require "dns"
 require "initial"
 require "connection"
+require "route_conf"
 
 DNS_table = {}
 sorted_ips = {}
@@ -24,6 +25,8 @@ curr = ''
 typing_check = ''
 t_channel = love.thread.newChannel()
 is_tcp = true
+route_conf = nil
+
 scroll = {
 	active = nil,
 	scrolling = nil,
@@ -32,14 +35,9 @@ scroll = {
 }
 
 function run_layers()
-	local threadCode = "open_physical_layer.lua"
-	love.thread.newThread(threadCode):start()
-	
-	threadCode = "open_transport_layer.lua"
-	love.thread.newThread(threadCode):start()
-	
-	threadCode = "open_network_layer.lua"
-	love.thread.newThread(threadCode):start()
+	love.thread.newThread("open_physical_layer.lua"):start()	
+	love.thread.newThread("open_transport_layer.lua"):start()	
+	love.thread.newThread("open_network_layer.lua"):start()
 end
 
 function love.load(arg)
@@ -97,17 +95,48 @@ function love.update(dt)
 end
 
 function love.textinput(text)
-	typing_check = typing_check..text
+	if route_conf then
+		if route_conf.typing and (tonumber(text) or text == ".") then
+			route_conf[1][route_conf.typing] = route_conf[1][route_conf.typing]..text
+		end
+	else
+		typing_check = typing_check..text
+	end
 end
 
 function love.mousepressed(x, y, k)
-	if k == 1 and x > 20 and x < 170 and y > 45 and y < 75 then
-		is_tcp = not is_tcp
-		return
-	end
-	
-	if k == 1 and scroll.active and x > 20 and x < 540 then
-		scroll.scrolling = true
+	if k == 1 then
+		if not route_conf then
+			if x > 20 and x < 170 and y > 45 and y < 75 then
+				is_tcp = not is_tcp
+				return
+			end
+			
+			if x > 200 and x < 350 and y > 45 and y < 75 then
+				route_conf = load_routes()
+				return
+			end
+			
+			if scroll.active and x > 20 and x < 540 then
+				scroll.scrolling = true
+			end
+		else
+			if x > 200 and x < 350 and y > 45 and y < 75 then
+				save_routes(route_conf)
+				route_conf = nil
+				return
+			end
+			
+			local index = math.floor((y-180)/30)
+			if index == 0 and not route_conf.typing then
+				add_entry(route_conf, "", "", "")
+				route_conf.typing = 1
+			end
+			if index > 0 and index < #route_conf and x > 670 and x < 820 then
+				rm_entry(route_conf, index)
+			end
+		end
+		
 	end
 end
 
@@ -116,47 +145,63 @@ function love.keypressed(key)
 		love.event.push('quit')
 	end
 	
-	if key == 'return' and typing_check then
-		client_test(typing_check, is_tcp)
-		typing_check = ''
-		return
-	end
-	
-	if key == 'space' then
-		--client_test_phy()
-		return
-	end
-	
-	if key == "backspace" and typing_check then
-		typing_check = typing_check:sub(1, #typing_check - 1)
+	if not route_conf then
+		if key == 'return' and typing_check then
+			client_test(typing_check, is_tcp)
+			typing_check = ''
+			return
+		end
+		
+		if key == "backspace" and typing_check then
+			typing_check = typing_check:sub(1, #typing_check - 1)
+		end
+	else
+		if key == "return" then
+			if route_conf.typing then
+				route_conf.typing = route_conf.typing + 1
+				if route_conf.typing == 4 then route_conf.typing = nil end
+			end
+		end
+		
+		if key == "backspace" and route_conf.typing then
+			route_conf[1][route_conf.typing] = route_conf[1][route_conf.typing]:sub(1, #route_conf[1][route_conf.typing] - 1)
+		end
 	end
 end
 
 function love.draw()
-	draw_table()
-	draw_log()
-	love.graphics.printf("Search: ",20, 500, 900, 'left')
-	love.graphics.printf(typing_check,100, 500, 900, 'left')
-	
-	if #DNS_log > 0 then
-		local request = DNS_log[#DNS_log]
-		local alpha = nil
-		if #DNS_log == 1 then alpha = 1-log_timer end
+	if route_conf then
+		draw_routes()
+	else
+		draw_table()
+		draw_log()
+		love.graphics.printf("Search: ",20, 500, 900, 'left')
+		love.graphics.printf(typing_check,100, 500, 900, 'left')
 		
-		love.graphics.setColor(1,1,1, alpha)
-		love.graphics.printf("Response:",20, 530, 900, 'left')
-		if request.response then
-			love.graphics.setColor(0,1,0, alpha)
-			love.graphics.printf(request.response, 100, 530, 340, 'left')
-		else
-			love.graphics.setColor(1,0,0, alpha)
-			love.graphics.printf("DNS lookup failed :/", 100, 530, 340, 'left')
+		if #DNS_log > 0 then
+			local request = DNS_log[#DNS_log]
+			local alpha = nil
+			if #DNS_log == 1 then alpha = 1-log_timer end
+			
+			love.graphics.setColor(1,1,1, alpha)
+			love.graphics.printf("Response:",20, 530, 900, 'left')
+			if request.response then
+				love.graphics.setColor(0,1,0, alpha)
+				love.graphics.printf(request.response, 100, 530, 340, 'left')
+			else
+				love.graphics.setColor(1,0,0, alpha)
+				love.graphics.printf("DNS lookup failed :/", 100, 530, 340, 'left')
+			end
+			love.graphics.setColor(1,1,1,1)
 		end
-		love.graphics.setColor(1,1,1,1)
-	end
 
-	if scroll.active then
-		draw_scroll()
+		if scroll.active then
+			draw_scroll()
+		end
+		
+		love.graphics.setColor(1,1,1,1)
+		love.graphics.printf("Press Enter to search...", 20, 560, 900, 'left')
+		love.graphics.printf("DNS Server", 0, 50, 900, 'center')
 	end
 	
 	local protocol = 'UDP'
@@ -165,11 +210,17 @@ function love.draw()
 	love.graphics.printf("Using", 20, 20, 150, 'center')
 	love.graphics.setColor(0,0,1,1)
 	love.graphics.rectangle("line", 20, 45, 150, 30)
-	love.graphics.printf(protocol, 20, 50, 150, 'center')
+	love.graphics.printf(protocol, 20, 52, 150, 'center')
 	love.graphics.setColor(1,1,1,1)
 	
-	love.graphics.printf("Press Enter to search...", 20, 560, 900, 'left')
-	love.graphics.printf("DNS Server", 0, 50, 900, 'center')
+	love.graphics.setColor(0,0,1,1)
+	love.graphics.rectangle("line", 200, 45, 150, 30)
+	if route_conf then
+		love.graphics.printf("Save and return", 200, 52, 150, 'center')
+	else
+		love.graphics.printf("Route Config", 200, 52, 150, 'center')
+	end
+	love.graphics.setColor(1,1,1,1)
 end
 
 function draw_scroll()
@@ -182,6 +233,43 @@ function draw_scroll()
 	love.graphics.setColor(0.7,0.7,0.7)
 	love.graphics.rectangle("fill", 521, 190 + 300*scroll.scroll_pos, 13, 300*scroll.scroll_size)
 	love.graphics.setColor(1,1,1,1)
+end
+
+function draw_routes()
+	love.graphics.printf("Routing table", 0, 130, 800, 'center')
+	local index
+	
+	love.graphics.rectangle("line", 150, 180, 500,30)
+	love.graphics.line(310, 180, 310, 210)
+	love.graphics.line(480, 180, 480, 210)
+	
+	love.graphics.printf("Network IP", 150, 190, 160, 'center')
+	love.graphics.printf("Mask", 310, 190, 170, 'center')
+	love.graphics.printf("Gateway", 480, 190, 170, 'center')
+	
+	if not route_conf.typing then
+		love.graphics.setColor(0,1,0)
+		love.graphics.rectangle("line", 672, 182, 146,26)
+		love.graphics.printf("Add", 670, 188, 150, 'center')
+		love.graphics.setColor(1,1,1)
+	end
+	
+	for index, route in ipairs(route_conf) do
+		if index < #route_conf and not (index == 1 and route_conf.typing) then
+			love.graphics.setColor(1,0,0)
+			love.graphics.rectangle("line", 672, 182 + 30*index, 146,26)
+			love.graphics.printf("Remove", 670, 188 + 30*index, 150, 'center')
+			love.graphics.setColor(1,1,1)
+		end
+		
+		love.graphics.rectangle("line", 150, 180 + 30*index, 500,30)
+		love.graphics.line(310, 180 + 30*index, 310, 210 + 30*index)
+		love.graphics.line(480, 180 + 30*index, 480, 210 + 30*index)
+		
+		love.graphics.printf(route[1], 150, 190 + 30*index, 160, 'center')
+		love.graphics.printf(route[2], 310, 190 + 30*index, 170, 'center')
+		love.graphics.printf(route[3], 480, 190 + 30*index, 170, 'center')
+	end
 end
 
 function draw_table()
