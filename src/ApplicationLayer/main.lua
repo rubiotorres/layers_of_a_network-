@@ -37,6 +37,9 @@ function run_layers()
 	
 	threadCode = "open_transport_layer.lua"
 	love.thread.newThread(threadCode):start()
+	
+	threadCode = "open_network_layer.lua"
+	love.thread.newThread(threadCode):start()
 end
 
 function love.load(arg)

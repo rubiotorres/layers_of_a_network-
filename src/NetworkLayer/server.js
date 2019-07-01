@@ -1,32 +1,46 @@
 var net = require('net');
-var routing = new Array();
 const readline = require('readline-sync')
+
+var routing = new Array();
+
+
+
 var server = net.createServer(function(socket) {
 	socket.write('Resp servidor\r\n');
 	socket.pipe(socket);
 });
-function criaRoteamento(){
-    var rotas = readline.question("Numero de rotas: ");
+
+function out(str){
+	'\033[93m' + console.log(str) + '\033[0m';
+}
+
+function startServer(){
+	createRouteTb();
+	showRoutes();
+	// enviaPacote();
+}
+
+function createRouteTb(){
+    var lines = require('fs').readFileSync("NetworkLayer/routing.txt", 'utf-8')
+		.split('\n')
+		.filter(Boolean);
+	
 	var i;
-	var rede, mask, gateway;
-	for (i = 0; i < rotas; i++){
-		rede = readline.question(i+1 + " IP Rede: ");
-		mask = readline.question(i+1 + " Mascara: ");
-		gateway = readline.question(i+1 + " Gateway: ");
+	var data;
+	for (i = 0; i < lines.length; i++){
+		data = lines[i].split('\t');
 		routing[i] = new Array();
-		routing[i][0] = rede;
-		routing[i][1] = mask;
-		routing[i][2] = gateway;
-		console.log("\n");
+		routing[i][0] = data[0];
+		routing[i][1] = data[1];
+		routing[i][2] = data[2];
 	}
-	console.log("IP Rede \t Mascara \t Gateway \n")
 }	
-function printRoteamento(){	
+function showRoutes(){	
+	out("IP Rede \t Mascara \t Gateway \n");
 	for (i = 0; i < routing.length; i++){
-		console.log(routing[i][0] +
+		out(routing[i][0] +
 		" \t " + routing[i][1] +
-		" \t " + routing[i][2]);
-		console.log("\n");
+		" \t " + routing[i][2] + "\n");
 	}
 }
 
@@ -71,8 +85,6 @@ function enviaPacote(){
 	
 }
 
-criaRoteamento();
-printRoteamento();
-enviaPacote();
+startServer();
 
 	//server.listen(1050, '127.0.0.1');
