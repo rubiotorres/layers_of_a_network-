@@ -11,10 +11,24 @@ var server = net.createServer(function(socket) {
 });
 
 function out(str){
-	'\033[93m' + console.log(str) + '\033[0m';
+	var timestamp = "[" + formatDate() + "]"
+	console.log("\x1B[33m--RED-- >>", timestamp ,str, '\x1B[0m');
+}
+
+function formatDate(){
+	var date = new Date();
+	var formatted = "" +
+		(date.getMonth() + 1).toString().padStart(2, "0") + "/" +
+		date.getDay().toString().padStart(2, "0") + "/" +
+		(1900 + date.getYear()).toString().substring(2) + " " +
+		date.getHours().toString().padStart(2, "0") + ":" +
+		date.getMinutes().toString().padStart(2, "0") + ":" +
+		date.getSeconds().toString().padStart(2, "0");
+	return formatted;
 }
 
 function startServer(){
+	out("Server listening...")
 	createRouteTb();
 	showRoutes();
 	// enviaPacote();
@@ -86,5 +100,3 @@ function enviaPacote(){
 }
 
 startServer();
-
-	//server.listen(1050, '127.0.0.1');
