@@ -58,8 +58,11 @@ function showRoutes(){
 	}
 }
 
+
 function enviaPacote(){
-	var iporigem = readline.question("IP Origem: "),
+	var ipenvio, i,
+		ipgateway,
+		iporigem = readline.question("IP Origem: "),
 		maskorigem = readline.question("Mascara Destino: "),
 		ipdest = readline.question("IP Destino: ");
 		maskdest = readline.question("Mascara Destino: ");
@@ -79,10 +82,10 @@ function enviaPacote(){
 	+"."+redeorigem[2]
 	+"."+redeorigem[3];
 	
-	rededest[0] = ipdest[0] & maskdest[0];
-	rededest[1] = ipdest[1] & maskdest[1];
-	rededest[2] = ipdest[2] & maskdest[2];
-	rededest[3] = ipdest[3] & maskdest[3];
+	rededest[0] = ipdest[0] & maskorigem[0];
+	rededest[1] = ipdest[1] & maskorigem[1];
+	rededest[2] = ipdest[2] & maskorigem[2];
+	rededest[3] = ipdest[3] & maskorigem[3];
 	
 	rededest = rededest[0]
 	+"."+rededest[1]
@@ -90,12 +93,16 @@ function enviaPacote(){
 	+"."+rededest[3];
 	console.log(redeorigem);
 	console.log(rededest);
-	var i, j, rede;
-	for(i = 0; i < routing.length; i++){
-		if(routing[i][0] = rededest){
-			break;
-		}
+	if (rededest == redeorigem)
+		ipenvio = iporigem;
+	else{
+		for(i=0; i < routing.length; i++)
+			if(rededest == routing[i][0])
+				gateway = routing[i][2];
+			if(i = routing.length -1)
+				gateway = routing[routing.length - 1][2];
 	}
+		
 	
 }
 
