@@ -1,14 +1,10 @@
 var net = require('net');
+const WebSocket = require('ws')
 const readline = require('readline-sync')
 
 var routing = new Array();
 
 
-
-var server = net.createServer(function(socket) {
-	socket.write('Resp servidor\r\n');
-	socket.pipe(socket);
-});
 
 function out(str){
 	var timestamp = "[" + formatDate() + "]"
@@ -27,15 +23,16 @@ function formatDate(){
 	return formatted;
 }
 
-function startServer(){
-	out("Server listening...")
+function start(){
+	out("PC1 started")
 	createRouteTb();
 	showRoutes();
-	// enviaPacote();
+	
+	enviaPacote();
 }
 
 function createRouteTb(){
-    var lines = require('fs').readFileSync("NetworkLayer/routing.txt", 'utf-8')
+    var lines = require('fs').readFileSync("Networklayer/routing.txt", 'utf-8')
 		.split('\n')
 		.filter(Boolean);
 	
@@ -61,15 +58,14 @@ function showRoutes(){
 
 function enviaPacote(){
 	var ipenvio, i,
-		ipgateway,
+		gateway, ipdestino,
 		iporigem = readline.question("IP Origem: "),
-		maskorigem = readline.question("Mascara Destino: "),
+		maskorigem = readline.question("Mascara origem: "),
 		ipdest = readline.question("IP Destino: ");
-		maskdest = readline.question("Mascara Destino: ");
+	ipdestino = ipdest;
 	iporigem = iporigem.split(".",4);
 	maskorigem = maskorigem.split(".",4);
 	ipdest = ipdest.split(".",4);
-	maskdest = maskdest.split(".",4);
 	var redeorigem = new Array();
 	var rededest = new Array();
 	redeorigem[0] = iporigem[0] & maskorigem[0];
@@ -91,19 +87,35 @@ function enviaPacote(){
 	+"."+rededest[1]
 	+"."+rededest[2]
 	+"."+rededest[3];
-	console.log(redeorigem);
-	console.log(rededest);
-	if (rededest == redeorigem)
-		ipenvio = iporigem;
-	else{
-		for(i=0; i < routing.length; i++)
-			if(rededest == routing[i][0])
-				gateway = routing[i][2];
-			if(i = routing.length -1)
-				gateway = routing[routing.length - 1][2];
+	out(redeorigem);
+	out(rededest);
+	if(rededest == redeorigem){
+		out('Enviando para pc...');
+		var connection = new WebSocket('ws://'+ipdestino+':9090');
 	}
-		
-	
+	else{
+		for(i=0; i < routing.length; i++){
+			if(rededest == routing[i][0]){
+				gateway = routing[i][2];
+				out('Enviando para gateway...');
+				var connection = new WebSocket('ws://'+gateway+':8080');
+				break;
+			}
+			if(i = routing.length -1){
+				out('Enviando para deafult gateway...');
+				gateway = routing[routing.length - 1][2];
+				var connection = new WebSocket('ws://'+gateway+':8080');
+			}
+		}
+	}
+	connection.onopen = () => {
+	  connection.send('Dado cliente') 
+	}
+	connection.onerror = (error) => {
+	  out(`WebSocket error: ${error}`)
+	}
+	connection.onmessage = (e) => {
+	  out(e.data)
+	}
 }
-
-startServer();
+start();
