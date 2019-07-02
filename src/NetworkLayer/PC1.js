@@ -96,20 +96,23 @@ function enviaPacote(){
 	else{
 		for(i=0; i < routing.length; i++){
 			if(rededest == routing[i][0]){
-				gateway = routing[i][2];
+				ipdestino = routing[i][2];
 				out('Enviando para gateway...');
-				var connection = new WebSocket('ws://'+gateway+':8080');
+				var connection = new WebSocket('ws://'+ipdestino+':8080');
 				break;
 			}
 			if(i = routing.length -1){
 				out('Enviando para deafult gateway...');
-				gateway = routing[routing.length - 1][2];
-				var connection = new WebSocket('ws://'+gateway+':8080');
+				ipdestino = routing[routing.length - 1][2];
+				var connection = new WebSocket('ws://'+ipdestino+':8080');
 			}
 		}
 	}
+	var version, hlenght, servicetype, tlenght, id, flags, offset, ttl, 
+	protocol, checksum, data;
+	ttl = 64;
 	connection.onopen = () => {
-	  connection.send('Dado cliente') 
+	  connection.send(iporigem+ipdestino+ttl) 
 	}
 	connection.onerror = (error) => {
 	  out(`WebSocket error: ${error}`)
