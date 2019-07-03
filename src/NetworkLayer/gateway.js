@@ -21,7 +21,7 @@ function formatDate(){
 	return formatted;
 }
 function createRouteTb(){
-    var lines = require('fs').readFileSync("Networklayer/routing.txt", 'utf-8')
+    var lines = require('fs').readFileSync("routing.txt", 'utf-8')
 		.split('\n')
 		.filter(Boolean);
 	

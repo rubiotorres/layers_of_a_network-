@@ -3,6 +3,7 @@ function out(str){
 	console.log("\x1B[33m--RED-- >>", timestamp ,str, '\x1B[0m');
 }
 
+var routing = new Array(); 
 function formatDate(){
 	var date = new Date();
 	var formatted = "" +
@@ -15,7 +16,7 @@ function formatDate(){
 	return formatted;
 }
 function createRouteTb(){
-    var lines = require('fs').readFileSync("Networklayer/routing.txt", 'utf-8')
+    var lines = require('fs').readFileSync("routing.txt", 'utf-8')
 		.split('\n')
 		.filter(Boolean);
 	
